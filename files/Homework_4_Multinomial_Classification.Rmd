@@ -1,0 +1,457 @@
+---
+title: "Homework 4: Multinomial Classification"
+author: "Kabin Devkota"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Libraries and setup
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(ggformula)
+library(GGally)
+library(ISLR2)
+library(car)
+set.seed(1998)
+```
+
+---
+
+## The Data
+
+Today we will analyze data from an online Ipsos (a consulting firm) survey that was conducted for a $\texttt{FiveThirthyEight}$ article [Why Many Americans Don't Vote](https://projects.fivethirtyeight.com/non-voters-poll-2020-election/). You can read more about the survey design and respondents in the `README` of their [GitHub repo](https://github.com/fivethirtyeight/data/tree/master/non-voters) for the data.
+
+Briefly, respondents were asked a variety of questions about their political beliefs, thoughts on multiple issues, and voting behavior. We will focus on the demographic variables and the respondent's party identification to understand whether a person is a probable voter (with levels always, sporadic, rarely/never).
+
+The specific variables we will use are (definitions are from the [`nonvoters_codebook.pdf`](https://github.com/fivethirtyeight/data/blob/master/non-voters/nonvoters_codebook.pdf)):
+
+-   `ppage`: Age of respondent
+-   `educ`: Highest educational attainment category
+-   `race`: Race of respondent, census categories Note: all categories except Hispanic are non-Hispanic
+-   `gender`: Gender of respondent
+-   `income_cat`: Household income category of respondent
+-   `Q30`: Response to the question "Generally speaking, do you think of yourself as a..."
+    -   1: Republican
+    -   2: Democrat
+    -   3: Independent
+    -   4: Another party, please specify
+    -   5: No preference
+    -   -1: No response
+-   `voter_category`: past voting behavior:
+    -   **always**: respondent voted in all or all-but-one of the elections they were eligible in
+    -   **sporadic**: respondent voted in at least two, but fewer than all-but-one of the elections they were eligible in
+    -   **rarely/never**: respondent voted in 0 or 1 of the elections they were eligible in
+
+These data can be read from the `nonvoters.csv` file this folder and were originally downloaded from: `https://github.com/fivethirtyeight/data/tree/master/non-voters`
+
+--- 
+
+## Questions
+
+1. Create a bivariate plot of voter category by party. What does it suggest about the predictive capability of party for voting?
+2. Write out the new equation for always with respect to rarely/never.
+3. Interpret the slope for genderMale. How did it change (if any)?
+4. Interpret the slopes for the two major parties (Republican, Democratic). What does this tell us?
+5. Get predictions from your model and discuss what they mean.
+6. Visualize the predictions versus the actual voter category and interpret it.
+7. How did the confusion matrix change? Interpret each entry in the confusion matrix.
+8. Discuss the assessment of adding party suggested in the challenge. Did adding party help the model? Why or why not?
+
+---
+
+```{r load-and-mutate-data}
+nonvoters <- read.csv("nonvoters.csv") |>
+  select(ppage, educ, race, gender, income_cat, Q30, voter_category)
+
+nonvoters <- nonvoters |>
+  mutate(
+    party = case_when(
+      Q30 == 1 ~ "Republican",
+      Q30 == 2 ~ "Democrat",
+      Q30 == 3 ~ "Independent",
+      Q30 %in% c(4, 5, -1) ~ "Other"
+    ),
+    party = factor(party, levels = c("Other", "Independent", "Democrat", "Republican")),
+    voter_category = factor(voter_category, levels = c("rarely/never", "sporadic", "always"))
+  )
+```
+
+
+```{r split-data}
+data_split <- initial_split(nonvoters, prop = 0.80, strata = voter_category)
+nonvoters_train <- training(data_split)
+nonvoters_test  <- testing(data_split)
+```
+
+
+-----
+
+## 1) Bivariate plot: voter category by party
+
+```{r}
+nonvoters |>
+  ggbivariate("voter_category", "party")
+```
+
+```{r party-summary, include=FALSE}
+party_props <- nonvoters |>
+  count(party, voter_category, name = "n") |>
+  group_by(party) |>
+  mutate(prop = n / sum(n)) |>
+  ungroup()
+
+always_props <- party_props |>
+  filter(voter_category == "always") |>
+  arrange(desc(prop))
+
+best_party_always  <- always_props$party[1]
+best_party_always_p <- always_props$prop[1]
+worst_party_always <- always_props$party[nrow(always_props)]
+worst_party_always_p <- always_props$prop[nrow(always_props)]
+always_gap <- best_party_always_p - worst_party_always_p
+```
+
+**Interpretation:**  
+Party is strongly associated with turnout consistency in this sample. **“Other”** respondents are the least consistent voters: **49.6%** are **rarely/never**, **35.1%** are **sporadic**, and only **15.3%** are **always** voters. In contrast, both major-party identifiers have much larger “always” shares: **Democrats** are **19.3%** rarely/never, **46.3%** sporadic, **34.4%** always, and **Republicans** are **18.7%** rarely/never, **45.8%** sporadic, **35.6%** always. **Independents** fall in between (**25.5%** rarely/never, **44.3%** sporadic, **30.2%** always). These differences show party carries meaningful predictive signal for voter category and motivates adding party to the multinomial model.
+
+-----
+
+## 2) Fit multinomial models (with and without party)
+
+```{r}
+# Model WITH party
+multi_mod <- multinom_reg() |> 
+  set_engine("nnet") |> 
+  fit(voter_category ~ ppage + party + educ + race + gender + income_cat, data = nonvoters_train)
+
+# Model WITHOUT party (for comparison)
+multi_mod_noparty <- multinom_reg() |> 
+  set_engine("nnet") |> 
+  fit(voter_category ~ ppage + educ + race + gender + income_cat, data = nonvoters_train)
+
+tidy(multi_mod) |> 
+  print(n = Inf)
+```
+
+The output above provides two sets of coefficients: one for **sporadic vs rarely/never** and one for **always vs rarely/never** (the baseline category is `rarely/never` because it is the first level of `voter_category`). Each coefficient represents the change in the relevant log-odds when the predictor increases by 1 (for `ppage`) or when a dummy indicator switches from 0 to 1 (for categorical predictors), holding other variables constant.
+
+```{r coef-helpers, include=FALSE}
+coef_party <- tidy(multi_mod)
+coef_noparty <- tidy(multi_mod_noparty)
+
+# identify the column that stores the outcome level in tidy() output
+lvl_col <- if ("y.level" %in% names(coef_party)) "y.level" else if ("level" %in% names(coef_party)) "level" else stop("Cannot find outcome level column in tidy() output.")
+
+get_est <- function(tbl, level, term_name) {
+  tbl |>
+    filter(.data[[lvl_col]] == level, term == term_name) |>
+    pull(estimate) |>
+    dplyr::first()
+}
+
+# Key coefficients for interpretation
+b_gender_spor_party   <- get_est(coef_party,   "sporadic", "genderMale")
+b_gender_spor_noparty <- get_est(coef_noparty, "sporadic", "genderMale")
+b_gender_alw_party    <- get_est(coef_party,   "always",   "genderMale")
+b_gender_alw_noparty  <- get_est(coef_noparty, "always",   "genderMale")
+
+b_dem_spor <- get_est(coef_party, "sporadic", "partyDemocrat")
+b_rep_spor <- get_est(coef_party, "sporadic", "partyRepublican")
+b_dem_alw  <- get_est(coef_party, "always",   "partyDemocrat")
+b_rep_alw  <- get_est(coef_party, "always",   "partyRepublican")
+# ppage coefficients and odds-ratio directions (model with party)
+b_ppage_spor_party <- get_est(coef_party, "sporadic", "ppage")
+b_ppage_alw_party  <- get_est(coef_party, "always",   "ppage")
+
+or_ppage_spor_party <- exp(b_ppage_spor_party)
+or_ppage_alw_party  <- exp(b_ppage_alw_party)
+
+# direction words based on sign of coefficient
+odds_dir <- function(beta) c("lower", "about the same", "higher")[sign(beta) + 2]
+sign_word <- function(beta) c("negative", "zero", "positive")[sign(beta) + 2]
+
+ppage_spor_odds_dir <- odds_dir(b_ppage_spor_party)
+ppage_alw_odds_dir  <- odds_dir(b_ppage_alw_party)
+ppage_spor_sign     <- sign_word(b_ppage_spor_party)
+ppage_alw_sign      <- sign_word(b_ppage_alw_party)
+
+gender_spor_odds_dir <- odds_dir(b_gender_spor_party)
+gender_alw_odds_dir  <- odds_dir(b_gender_alw_party)
+
+# gender coefficient change after adding party
+delta_gender_spor <- b_gender_spor_party - b_gender_spor_noparty
+delta_gender_alw  <- b_gender_alw_party  - b_gender_alw_noparty
+
+mag_change_word <- function(beta_party, beta_noparty) {
+  c("shrinks", "stays about the same", "grows")[sign(abs(beta_party) - abs(beta_noparty)) + 2]
+}
+mag_change_spor <- mag_change_word(b_gender_spor_party, b_gender_spor_noparty)
+mag_change_alw  <- mag_change_word(b_gender_alw_party,  b_gender_alw_noparty)
+
+mag_change_interp <- function(beta_party, beta_noparty) {
+  c(
+    "This indicates that some of the gender difference seen in the no-party model is explained by party composition.",
+    "This indicates that adjusting for party does not materially change the estimated gender association.",
+    "This indicates that adjusting for party reveals a stronger gender association than in the no-party model."
+  )[sign(abs(beta_party) - abs(beta_noparty)) + 2]
+}
+mag_interp_spor <- mag_change_interp(b_gender_spor_party, b_gender_spor_noparty)
+mag_interp_alw  <- mag_change_interp(b_gender_alw_party,  b_gender_alw_noparty)
+
+# party coefficient direction words
+dem_spor_odds_dir <- odds_dir(b_dem_spor)
+dem_alw_odds_dir  <- odds_dir(b_dem_alw)
+rep_spor_odds_dir <- odds_dir(b_rep_spor)
+rep_alw_odds_dir  <- odds_dir(b_rep_alw)
+
+```
+
+-----
+
+## 3–4) Interpreting key coefficients (gender + party)
+
+### For **sporadic vs rarely/never**
+
+- **Age (`ppage`)**: The age coefficient is **0.0467** (p = **1.10e-71**), so a 1‑year increase in age multiplies the odds of being **sporadic** (vs **rarely/never**) by **exp(0.0467) = 1.048** (about a **4.8% increase** in odds per year), holding all other predictors constant.
+
+- **Gender (`genderMale`)**: The `genderMale` coefficient is **-0.116** (p = **0.152**), giving an odds ratio of **exp(-0.116) = 0.891**. In the fitted model, males have about **11% lower odds** of being **sporadic** (vs **rarely/never**) than females, after adjusting for age, party, education, race, and income, but this effect is **not statistically significant** at $\alpha$ = 0.05.
+
+**How did genderMale change after adding party?**  
+Without party, the coefficient is **-0.1195**; with party, it is **-0.116**. This is a very small change in magnitude (about **0.0035**), so adding party does **not** materially change the estimated gender association for sporadic voting.
+
+### For **always vs rarely/never**
+
+- **Age (`ppage`)**: The age coefficient is **0.0586** (p = **6.92e-93**), so a 1‑year increase in age multiplies the odds of being an **always** voter (vs **rarely/never**) by **exp(0.0586) = 1.060** (about a **6.0% increase** in odds per year), holding other predictors constant.
+
+- **Gender (`genderMale`)**: The `genderMale` coefficient is **-0.165** (p = **0.0628**), giving an odds ratio of **exp(-0.165) = 0.848**. In the fitted model, males have about **15% lower odds** of being an **always** voter (vs **rarely/never**) than females after adjustment; this result is **marginal** (slightly above 0.05).
+
+**How did genderMale change after adding party?**  
+Without party, the coefficient is **-0.1828**; with party, it is **-0.165** (a reduction in magnitude of about **0.0175**). This indicates that part of the gender difference in always-voting behavior overlaps with party identification, but the fitted model still estimates lower odds for males.
+
+### Party slopes for the two major parties (Democrat and Republican)
+
+All party coefficients are relative to the baseline **Other**.
+
+- **Democrat vs Other**
+  - Sporadic vs rarely/never: **$\beta$ = 0.910** (p = **2.36e-14**), OR = **exp(0.910) = 2.484**
+  - Always vs rarely/never: **$\beta$ = 1.26** (p = **2.30e-18**), OR = **exp(1.26) = 3.519**
+
+- **Republican vs Other**
+  - Sporadic vs rarely/never: **$\beta$ = 0.839** (p = **2.48e-11**), OR = **exp(0.839) = 2.314**
+  - Always vs rarely/never: **$\beta$ = 1.15** (p = **1.38e-14**), OR = **exp(1.15) = 3.152**
+
+**Interpretation:** 
+Democrats and Republicans have substantially higher odds of being consistent voters than the “Other” group even after controlling for demographics. In particular, identifying as a Democrat or Republican is associated with roughly 3× higher odds of being an **always** voter (vs **rarely/never**) and with roughly 2.5× higher odds of being an **sporadic** voter (vs **rarely/never**) compared with “Other,” holding age, education, race, gender, and income constant.
+
+-----
+
+## 2) Equation for **always** with respect to **rarely/never**
+
+Using the fitted multinomial model **with party**, the log-odds of being an **always** voter relative to **rarely/never** is:
+
+$$
+\begin{aligned}
+\log\left(\frac{\hat{p}_{\text{always}}}{\hat{p}_{\text{rarely/never}}}\right)
+&= -2.78 + 0.0586\,\text{ppage} \\
+&\quad + 0.733\,\mathbf{1}_{\{\text{party=Independent}\}}
+      + 1.26\,\mathbf{1}_{\{\text{party=Democrat}\}}
+      + 1.15\,\mathbf{1}_{\{\text{party=Republican}\}} \\
+&\quad - 1.28\,\mathbf{1}_{\{\text{educ=High school or less}\}}
+      - 0.393\,\mathbf{1}_{\{\text{educ=Some college}\}} \\
+&\quad - 0.287\,\mathbf{1}_{\{\text{race=Hispanic}\}}
+      - 0.652\,\mathbf{1}_{\{\text{race=Other/Mixed}\}}
+      + 0.111\,\mathbf{1}_{\{\text{race=White}\}} \\
+&\quad - 0.165\,\mathbf{1}_{\{\text{gender=Male}\}}
+      + 0.0118\,\mathbf{1}_{\{\text{income\_cat=\$40–75k}\}}
+      + 0.0978\,\mathbf{1}_{\{\text{income\_cat=\$75–125k}\}} \\
+&\quad - 0.730\,\mathbf{1}_{\{\text{income\_cat=Less than \$40k}\}}.
+\end{aligned}
+$$
+
+**Interpretation:**  
+This equation gives the fitted log-odds of being an **always** voter versus **rarely/never** for a respondent, relative to the reference levels of the categorical predictors (the categories not listed in the indicator terms). For example, the **age** coefficient (0.0586) means each additional year of age multiplies the odds of being **always** (vs **rarely/never**) by **exp(0.0586) $\approx$ 1.06**, holding the other variables fixed. Similarly, the **Democrat** coefficient (1.26) implies Democrats have **exp(1.26) $\approx$ 3.52×** the odds of being an always voter (vs rarely/never) compared with the “Other” party baseline, after adjusting for demographics.
+
+
+-----
+
+## 5) Predicting and what predictions mean
+
+```{r}
+voter_aug <- augment(multi_mod, new_data = nonvoters_test)
+
+voter_aug |>
+  select(voter_category, .pred_class, starts_with(".pred_")) |>
+  head(10)
+```
+
+**Interpretation:**  
+- `.pred_class` is the predicted voter category (the category with the largest predicted probability).  
+- The `.pred_rarely/never`, `.pred_sporadic`, and `.pred_always` columns are predicted probabilities for each outcome and should sum to 1 for each respondent. These probabilities represent the model’s estimated chance that a respondent belongs to each voting category given their demographics and party identification.
+
+-----
+
+## 6–7) Confusion matrices, visualization, and interpretation
+
+```{r}
+# Confusion matrix for the party model
+conf_party <- voter_aug |> 
+  count(voter_category, .pred_class, .drop = FALSE)
+
+conf_party_wide <- conf_party |>
+  pivot_wider(names_from = .pred_class, values_from = n, values_fill = 0)
+
+conf_party_wide
+```
+
+```{r conf-party-stats, include=FALSE}
+# derive a full confusion matrix with zeros
+conf_party_full <- voter_aug |>
+  count(voter_category, .pred_class, name = "n") |>
+  tidyr::complete(voter_category, .pred_class, fill = list(n = 0))
+
+cm_party <- conf_party_full |>
+  pivot_wider(names_from = .pred_class, values_from = n, values_fill = 0) |>
+  tibble::column_to_rownames("voter_category") |>
+  as.matrix()
+
+diag_party <- diag(cm_party)
+row_sum_party <- rowSums(cm_party)
+recall_party <- diag_party / row_sum_party
+
+best_class_party <- names(which.max(recall_party))
+worst_class_party <- names(which.min(recall_party))
+
+# biggest off-diagonal error
+cm_party_off <- cm_party
+diag(cm_party_off) <- 0
+max_err_party <- which(cm_party_off == max(cm_party_off), arr.ind = TRUE)[1, , drop = FALSE]
+max_err_party_n <- cm_party_off[max_err_party[1,1], max_err_party[1,2]]
+max_err_party_from <- rownames(cm_party_off)[max_err_party[1,1]]
+max_err_party_to <- colnames(cm_party_off)[max_err_party[1,2]]
+
+# class totals (test set)
+true_counts <- rowSums(cm_party)
+pred_counts <- colSums(cm_party)
+n_test <- sum(cm_party)
+
+# key misclassifications for narrative
+rn_as_sp <- cm_party["rarely/never", "sporadic"]
+al_as_sp <- cm_party["always", "sporadic"]
+```
+
+```{r}
+# Visualize actual distribution and predicted-vs-actual counts (party model)
+nonvoters_test |>
+  ggplot(aes(x = voter_category)) +
+  geom_bar() +
+  labs(title = "Self-reported voter category (test set)")
+
+conf_party |> 
+  ggplot(aes(x = voter_category, y = n, fill = .pred_class)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Predicted vs self-reported voter category (test set, model with party)")
+```
+
+**Interpretation (predicted vs actual):**  
+In the test set (n = `r n_test`), the true class counts are **rarely/never = `r true_counts['rarely/never']`**, **sporadic = `r true_counts['sporadic']`**, and **always = `r true_counts['always']`**. The model with party predicts **rarely/never = `r pred_counts['rarely/never']`**, **sporadic = `r pred_counts['sporadic']`**, and **always = `r pred_counts['always']`**, so it **over-predicts “sporadic”** and **under-predicts “always.”**  
+
+Performance is strongest for **`r best_class_party`** (recall = `r round(recall_party[best_class_party], 3)`) and weakest for **`r worst_class_party`** (recall = `r round(recall_party[worst_class_party], 3)`). The two biggest misclassification patterns are:
+- **rarely/never → sporadic**: `r rn_as_sp` cases  
+- **always → sporadic**: `r al_as_sp` cases  
+
+This matches what the stacked bar plot shows: many respondents who are truly **rarely/never** or **always** are predicted as **sporadic**.
+
+**Interpretation (confusion matrix entries):**  
+Rows are the **true** voter category and columns are the **predicted** category.
+
+- True **rarely/never** (`r true_counts['rarely/never']` total):  
+  - predicted rarely/never: `r cm_party['rarely/never','rarely/never']` (correct)  
+  - predicted sporadic: `r cm_party['rarely/never','sporadic']`  
+  - predicted always: `r cm_party['rarely/never','always']`  
+
+- True **sporadic** (`r true_counts['sporadic']` total):  
+  - predicted rarely/never: `r cm_party['sporadic','rarely/never']`  
+  - predicted sporadic: `r cm_party['sporadic','sporadic']` (correct)  
+  - predicted always: `r cm_party['sporadic','always']`  
+
+- True **always** (`r true_counts['always']` total):  
+  - predicted rarely/never: `r cm_party['always','rarely/never']`  
+  - predicted sporadic: `r cm_party['always','sporadic']`  
+  - predicted always: `r cm_party['always','always']` (correct)  
+
+The largest error cell is **`r max_err_party_from` → `r max_err_party_to`** (n = `r max_err_party_n`), showing the model most often confuses one of the extreme categories (**rarely/never** or **always**) with the middle category (**sporadic**).
+
+---
+
+## 7–8) Did the confusion matrix change, and did adding party help?
+
+```{r}
+# Predictions + confusion matrix for the no-party model
+voter_aug_noparty <- augment(multi_mod_noparty, new_data = nonvoters_test)
+
+conf_noparty <- voter_aug_noparty |>
+  count(voter_category, .pred_class, .drop = FALSE)
+
+conf_noparty_wide <- conf_noparty |>
+  pivot_wider(names_from = .pred_class, values_from = n, values_fill = 0)
+
+conf_noparty_wide
+```
+
+```{r compare-models-stats, include=FALSE}
+# Overall accuracy on the same test set
+acc_party <- mean(voter_aug$.pred_class == voter_aug$voter_category)
+acc_noparty <- mean(voter_aug_noparty$.pred_class == voter_aug_noparty$voter_category)
+acc_delta <- acc_party - acc_noparty
+acc_delta_abs <- abs(acc_delta)
+acc_change_word <- c("decreases", "does not change", "increases")[sign(acc_delta) + 2]
+
+# confusion matrices as matrices
+conf_noparty_full <- voter_aug_noparty |>
+  count(voter_category, .pred_class, name = "n") |>
+  tidyr::complete(voter_category, .pred_class, fill = list(n = 0))
+
+cm_noparty <- conf_noparty_full |>
+  pivot_wider(names_from = .pred_class, values_from = n, values_fill = 0) |>
+  tibble::column_to_rownames("voter_category") |>
+  as.matrix()
+
+diag_noparty <- diag(cm_noparty)
+row_sum_noparty <- rowSums(cm_noparty)
+recall_noparty <- diag_noparty / row_sum_noparty
+
+recall_diff <- recall_party - recall_noparty
+best_improve_class <- names(which.max(recall_diff))
+best_improve_amount <- recall_diff[best_improve_class]
+
+# changes in diagonal (correct predictions) when adding party
+diag_diff <- diag(cm_party) - diag(cm_noparty)
+names(diag_diff) <- names(diag(cm_party))
+
+# a few key cell changes (party minus no-party)
+rn_sp_change <- cm_party["rarely/never","sporadic"] - cm_noparty["rarely/never","sporadic"]
+al_sp_change <- cm_party["always","sporadic"] - cm_noparty["always","sporadic"]
+al_rn_change <- cm_party["always","rarely/never"] - cm_noparty["always","rarely/never"]
+al_al_change <- cm_party["always","always"] - cm_noparty["always","always"]
+```
+
+
+**How did the confusion matrix change?**  
+Comparing the two confusion matrices on the same test set, adding party increases correct predictions for the two “extreme” classes:
+- Correct **rarely/never** predictions change by **`r diag_diff['rarely/never']`** (party minus no‑party).  
+- Correct **always** predictions change by **`r diag_diff['always']`**.  
+The tradeoff is a small decrease in correct **sporadic** predictions (**`r diag_diff['sporadic']`**).
+
+
+The biggest practical improvement is fewer “rarely/never” respondents being predicted as “sporadic”: **rarely/never → sporadic** changes by **`r rn_sp_change`** (negative means fewer such mistakes with party). For “always” voters, the party model produces **`r al_al_change`** more correct “always” predictions and **`r al_rn_change`** fewer cases of **always → rarely/never**.
+
+
+**Did adding party help? Why or why not?**  
+Yes, but the gain is modest. Overall accuracy increases from **`r round(acc_noparty, 3)`** (no party) to **`r round(acc_party, 3)`** (with party), an absolute change of **`r round(acc_delta, 3)`**. The improvement comes mainly from better identification of **always** and **rarely/never** voters, which makes sense because party membership is strongly associated with voter category (see Q1) and the party coefficients in the multinomial model are large and highly significant (see Q4). Even with party included, the dominant error mode remains confusion into **sporadic**, so party helps—but it does not fully separate consistent voters from inconsistent voters on its own.

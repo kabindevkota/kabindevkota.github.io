@@ -1,0 +1,394 @@
+---
+title: "Homework 2 - Multiple Regression"
+author: "Kabin Devkota"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+## Libraries and setup
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(ggformula)
+library(ISLR)
+library(GGally)
+
+set.seed(1998)
+```
+
+-----
+
+## Question
+Use the `Carseats` dataset (can be found in ISLR R package) to predict `Sales` using other variables. You will build, assess, and interpret a multiple
+regression model that:
+
+- Includes at least one qualitative (categorical) predictor (for example: US, Urban, or ShelveLoc).
+- Includes at least one quantitative (numerical) predictor.
+-  Includes an interaction between the qualitative and quantitative predictor
+
+### (a) Exploration and Model identification
+
+This includes (but not limited to):
+
+- Explore the data using summaries and visualizations
+- Identify your chosen predictors (quantitative & qualitative)
+- Justify why they are reasonable for predicting sales.
+- Propose an initial multiple regression model that includes an interaction.
+
+
+
+```{r}
+# Load the data
+carseats <- ISLR::Carseats |> as_tibble()
+
+# Quick look at the data
+glimpse(carseats)
+summary(carseats)
+
+# Check for missing values (should be none, but always good to confirm)
+carseats |> summarise(across(everything(), ~ sum(is.na(.))))
+
+# Basic EDA
+# Response distribution
+carseats |> 
+  ggplot(aes(x = Sales)) +
+  geom_histogram(bins = 30)
+
+# Pick one quantitative + one qualitative predictor for the interaction
+# Quantitative: Price (common sense: higher price usually -> lower sales)
+# Qualitative: ShelveLoc (shelf location quality: bad/medium/good)
+carseats |> count(ShelveLoc)
+
+# How Sales differs across shelf locations
+carseats |>
+  ggplot(aes(x = ShelveLoc, y = Sales)) +
+  geom_boxplot()
+
+# Relationship between Sales and Price, colored by shelf location
+carseats |>
+  ggplot(aes(x = Price, y = Sales, color = ShelveLoc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE)+
+  labs(color = "Shelving Location")
+
+# Quick pairs plot for a few numeric variables
+carseats_small <- carseats |> 
+  select(Sales, Price, Advertising, Income, CompPrice, Age)
+
+GGally::ggpairs(carseats_small)
+
+# Train/test split 
+# Using tidymodels splitting style 
+set.seed(1998)
+seat_split <- initial_split(carseats, prop = 0.80, strata = Sales)
+seat_train <- training(seat_split)
+seat_test  <- testing(seat_split)
+
+# Model specification
+lm_spec <- linear_reg() |>
+  set_mode("regression") |>
+  set_engine("lm")
+
+# Initial model with interaction
+# Interaction: Price * ShelveLoc expands to:
+#   Price + ShelveLoc + Price:ShelveLoc
+mlr_mod <- lm_spec |>
+  fit(Sales ~ Price * ShelveLoc + Advertising + Income, data = seat_train)
+
+# Model output
+tidy(mlr_mod)
+glance(mlr_mod)
+
+```
+The goal of this analysis is to model and predict `Sales` of car seats using store-level and product-related characteristics from the `Carseats` data set. Before fitting a model, the data were explored using numerical summaries and visualizations.
+
+The distribution of Sales is reasonably symmetric with no extreme outliers, suggesting that a linear modeling approach is appropriate. `Price` was selected as a quantitative predictor because pricing directly affects consumer demand. `ShelveLoc`, a qualitative predictor describing shelf placement quality (Bad, Medium, Good), was chosen because shelf visibility is expected to influence purchasing behavior. Boxplots show clear differences in Sales across shelf locations, with higher median sales for better placements.
+
+A scatter plot of `Sales` versus `Price`, colored by `ShelveLoc`, suggests that the relationship between `Price` and `Sales` may differ depending on shelf location. This motivates including an interaction between `Price` and `ShelveLoc`. `Advertising` and `Income` were added as control variables since marketing effort and local income levels are plausibly related to sales.
+
+Based on this exploration, the following multiple linear regression model was fit:
+
+$$
+\text{Sales} \sim \text{Price} \times \text{ShelveLoc} + \text{Advertising} + \text{Income}
+$$
+
+-----
+
+### (b) Interpretation of the coefficients
+
+This includes (but not limited to):
+
+- Interpret the coefficient for the quantitative predictor.
+- Interpret the coefficient(s) for the qualitative predictor.
+- Interpret the interaction term.
+- Explain how the relationship between the quantitative predictor and Sales changes across levels of the qualitative predictor.
+
+
+
+```{r}
+# Coefficient table for interpretation
+tidy(mlr_mod)
+```
+
+
+#### Interpreting the fitted multiple linear regression model
+
+The estimated model (with **ShelveLoc = Bad** as the baseline category) is:
+
+$$
+\begin{aligned}
+\widehat{Sales} = 10.3442 - 0.05595 \times Price + 5.2644 \times ShelveLocGood + 1.7639 \times ShelveLocMedium + 0.08537 \times Advertising \\+ 0.01640 \times Income - 0.00432 \times Price \times ShelveLocGood + 0.000292 \times Price \times ShelveLocMedium
+\end{aligned}
+$$
+
+
+#### Interpretation of all predictors
+
+* **Intercept = 10.3442**
+  This is the predicted value of Sales when `Price = 0`, `Advertising = 0`, `Income = 0`, and `ShelveLoc = Bad`. While this combination of values is not realistic, the intercept serves as a reference point for the regression model.
+
+
+##### Price (quantitative predictor)
+
+Because Price interacts with ShelveLoc, its effect on Sales depends on shelf placement.
+
+* **ShelveLoc = Bad (baseline)**
+
+$$
+\frac{\partial \widehat{Sales}}{\partial Price} = -0.05595
+$$
+$$
+\widehat{Sales}_{Bad}
+= 10.3442 - 0.05595 \times Price + 0.08537 \times Advertising + 0.01640 \times Income
+$$
+
+A one-unit increase in Price is associated with an average **decrease of 0.05595 units in Sales**, holding all other variables constant.
+
+* **ShelveLoc = Good**
+
+$$
+\frac{\partial \widehat{Sales}}{\partial Price}
+= -0.05595 - 0.00432
+= -0.06027
+$$
+$$
+\widehat{Sales}_{Good}
+= (10.3442 + 5.2644) - (0.05595 + 0.00432) \times Price + 0.08537 \times Advertising + 0.01640 \times Income
+$$
+
+$$
+\widehat{Sales}_{Good}
+= 15.6086 - 0.06027 \times Price + 0.08537 \times Advertising + 0.01640 \times Income
+$$
+
+
+A one-unit increase in Price is associated with an average **decrease of 0.06027 units in Sales**.
+
+* **ShelveLoc = Medium**
+
+$$
+\frac{\partial \widehat{Sales}}{\partial Price}
+= -0.05595 + 0.000292
+= -0.05566
+$$
+
+$$
+\widehat{Sales}_{Medium}
+= (10.3442 + 1.7639) - (0.05595 - 0.000292) \times Price + 0.08537 \times Advertising + 0.01640 \times Income
+$$
+
+$$
+\widehat{Sales}_{Medium}
+= 12.1081 - 0.05566 \times Price + 0.08537 \times Advertising + 0.01640 \times Income
+$$
+
+A one-unit increase in Price is associated with an average **decrease of 0.05566 units in Sales**.
+
+Overall, Price has a **negative relationship** with Sales for all shelf locations. The decline in Sales is slightly stronger when shelf placement is Good.
+
+
+##### ShelveLoc (qualitative predictor)
+
+These coefficients represent shifts in the expected level of Sales relative to the baseline category (Bad), holding Price, Advertising, and Income constant.
+
+* **ShelveLocGood = 5.2644**
+
+  Products with Good shelf placement are associated with an average **increase of 5.2644 units in Sales** compared to Bad placement.
+
+* **ShelveLocMedium = 1.7639**
+
+  Products with Medium shelf placement are associated with an average **increase of 1.7639 units in Sales** compared to Bad placement.
+
+
+##### Advertising (quantitative predictor)
+
+* **Advertising = 0.08537**
+
+  Holding all other variables constant, a one-unit increase in Advertising is associated with an average **increase of 0.08537 units in Sales**.
+
+
+##### Income (quantitative predictor)
+
+* **Income = 0.01640**
+
+  Holding all other variables constant, a one-unit increase in Income is associated with an average **increase of 0.01640 units in Sales**.
+
+
+##### Interaction terms (Price × ShelveLoc)
+
+* **Price × ShelveLocGood = -0.00432**
+
+  Compared to Bad shelf placement, the negative effect of Price on Sales becomes **0.00432 units stronger** when shelf placement is Good.
+
+* **Price × ShelveLocMedium = 0.000292**
+
+  Compared to Bad shelf placement, the effect of Price on Sales becomes **slightly less negative** when shelf placement is Medium, though the difference is very small.
+
+-----
+
+### (c) Accuracy of the model
+
+This includes (but not limited to):
+
+- Evaluate how well the model fits the data using R2
+- Generate predictions on the test data
+- Compare (briefly) training vs. testing performance if relevant
+- Discuss whether the model generalizes well
+
+
+```{r}
+# Predictions + accuracy
+seat_metrics <- metric_set(rmse, rsq, mae)
+
+train_pred <- predict(mlr_mod, new_data = seat_train) |>
+  bind_cols(seat_train)
+
+test_pred <- predict(mlr_mod, new_data = seat_test) |>
+  bind_cols(seat_test)
+
+# Metrics
+seat_metrics(train_pred, truth = Sales, estimate = .pred)
+seat_metrics(test_pred, truth = Sales, estimate = .pred)
+
+
+rsq(train_pred, truth = Sales, estimate = .pred)
+rsq(test_pred, truth = Sales, estimate = .pred)
+
+# Quick plot: predicted vs actual on test set
+test_pred |>
+  ggplot(aes(x = Sales, y = .pred)) +
+  geom_point(alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0)
+
+```
+
+Model performance was evaluated using an 80/20 train-test split. The model achieved an $R^2$ of approximately 0.63 on the training set and 0.64 on the test set. The similarity between these values suggests that the model generalizes well and does not exhibit strong overfitting. The values mean that approximately 63% of the variability in Sales can be explained by the variables used in the model.
+
+Additional metrics such as RMSE and MAE were comparable between training and test sets, further supporting stable predictive performance. A plot of predicted versus actual Sales values for the test data shows points clustered around the 45-degree line, indicating that the model captures the overall relationship between predictors and Sales reasonably well.
+
+
+### (d) Predictions of new observations
+
+This includes (but not limited to):
+
+- Use your fitted model to predict sales for at least one new observation
+- Clearly specify the values of the predictors you used (both qualitative and quantitative)
+- Interpret the prediction in words.
+- Include confidence and prediction intervals
+
+
+```{r}
+# Predict for a truly new case
+new_case <- tibble(
+  Price = 120,
+  ShelveLoc = factor("Good", levels = levels(carseats$ShelveLoc)),
+  Advertising = 10,
+  Income = 60
+)
+
+new_case
+
+# For intervals, use the underlying lm() object
+lm_engine <- extract_fit_engine(mlr_mod)
+
+# Point prediction + confidence interval (mean response)
+predict(lm_engine, newdata = new_case, interval = "confidence")
+
+# Point prediction + prediction interval (new individual observation)
+predict(lm_engine, newdata = new_case, interval = "prediction")
+
+```
+
+To illustrate prediction, a new hypothetical store was considered with Price = 120, ShelveLoc = Good, Advertising = 10, and Income = 60.
+
+The model makes a prediction of 1021 unit of sales if the price is 120, the shelving location is good, the advertising budget is \$10,000 and community income level is \$60,000 at this store location.
+
+A confidence interval was computed to estimate the mean Sales for stores with these characteristics which is a range between 978.4 and 1064.3 units of Sales, while a prediction interval was computed to represent the range in which Sales for a single new store are likely to fall which is a range between 678.6 and 1364.1 unit of Sales.
+
+As expected, the prediction interval is wider than the confidence interval, reflecting additional uncertainty when predicting an individual outcome rather than an average response.
+
+
+### (e) Model Assessment
+
+This includes (but not limited to):
+
+- Assess model assumptions using residual plots, normality checks(if appropriate)
+- Comment on whether assumptions appear reasonable
+
+
+```{r}
+# Diagnostics / model assessment
+lm_engine <- extract_fit_engine(mlr_mod)
+
+# Get fitted values + residuals in a tidy way
+diag_df <- broom::augment(lm_engine)
+
+# Residuals vs fitted (linearity + constant variance check)
+diag_df |>
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = 0)
+
+# Normal Q-Q plot (normality of residuals)
+diag_df |>
+  ggplot(aes(sample = .std.resid)) +
+  stat_qq() +
+  stat_qq_line()
+
+# Scale-Location plot (another look at constant variance)
+diag_df |>
+  ggplot(aes(x = .fitted, y = sqrt(abs(.std.resid)))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(
+    title = "Scale–Location Plot",
+    x = "Fitted Values",
+    y = "Square Root of Absolute Standardized Residuals"
+  )
+
+# Leverage / influence
+diag_df |>
+  ggplot(aes(x = .hat, y = .std.resid)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = c(-2, 0, 2), linetype = "dashed") +
+  labs(
+    title = "Standardized Residuals vs Leverage",
+    x = "Leverage (Hat Values)",
+    y = "Standardized Residuals"
+  )
+```
+
+Diagnostic plots were examined to assess the assumptions of multiple linear regression. 
+
+The residuals versus fitted values plot shows no strong systematic patterns, suggesting that the linearity assumption is reasonable and that variance is approximately constant.
+
+The normal Q–Q plot shows residuals that closely follow the reference line with only minor deviations, indicating that the normality assumption is reasonably satisfied. The scale-location plot does not show a clear funnel shape, providing further support for constant variance.
+
+No highly influential observations were identified. Overall, the diagnostic results suggest that the assumptions underlying the regression model are reasonably met.

@@ -1,0 +1,317 @@
+---
+title: "Homeword 3: Backward selection"
+author: "Kabin Devkota"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+## Libraries and setup
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(ggformula)
+library(ISLR)
+library(GGally)
+library(ISLR2)
+library(car)
+set.seed(1998)
+```
+
+-----
+
+
+## Question
+
+Use the Auto dataset (can be found in ISLR R package). 
+
+Our objectives:
+
+- Predict `acceleration` using the remaining quantitative variables.
+- Which, if any, of the variables are significant predictors of acceleration.
+- How good is the resulting prediction?
+
+1. Remove the name and origin columns from the data set. Then produce a ggpairs plot. Write a short discussion (2–3 sentences) about what the plot suggests for multiple linear regression (collinearity, pairwise relationships, etc.).
+
+2. Start from the full model with all quantitative predictors. Do a manual backward selection using p-values to determine what to remove until all predictors are significant at the $\alpha$ = 0.05 level. Filter the tidy() output to show only candidates for removal, i.e. p-values > $\alpha$. Remove the predictor
+with the largest p-value at each step. Compare the full (unfiltered) tidy()
+results and adjusted $R^2$ at each step to the previous step.
+
+3. With the final model (from (2)), check residuals, interpret coefficients,
+report confidence intervals on coefficients.
+
+---
+
+```{r}
+# Load the data
+auto <- ISLR::Auto |> as_tibble()
+
+# Quick look at the data
+glimpse(auto)
+summary(auto)
+
+# Check for missing values (should be none, but always good to confirm)
+auto |> summarise(across(everything(), ~ sum(is.na(.))))
+
+# Basic EDA
+# Response distribution
+auto |> 
+  ggplot(aes(x = acceleration)) +
+  geom_histogram(bins = 30)
+
+# Quick pairs plot for a few numeric variables
+auto_small <- auto |> 
+  select(-name, -origin)
+
+GGally::ggpairs(auto_small)
+```
+
+### Interpretation from paired plots
+
+The ggpairs plot suggests several predictors are strongly related to each other (notably displacement, horsepower, and weight), which indicates potential multicollinearity in a multiple linear regression model. Acceleration shows visible relationships with these predictors (generally stronger than with mpg/year), so a linear model is reasonable as a starting point. Because some predictors move together, we should expect that individual p-values and coefficient signs/magnitudes may change as variables are removed during backward selection.
+
+
+```{r}
+# Train/test split 
+auto_split <- initial_split(auto_small, prop = 0.80, strata = acceleration)
+auto_train <- training(auto_split)
+auto_test  <- testing(auto_split)
+
+# Model specification
+lm_spec <- linear_reg() |>
+  set_mode("regression") |>
+  set_engine("lm")
+
+lm_spec
+```
+
+
+### Initial Model
+
+```{r}
+# Initial model with all variables
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = auto_train)
+
+# Model output
+model.metrics <- glance(belim_model)
+model.metrics
+tidy(belim_model) |> arrange(p.value)|> mutate((remove=p.value > 0.05))
+```
+
+### Remove cylinders
+```{r}
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = select(auto_train,-cylinders))
+
+rbind(model.metrics,glance(belim_model)) -> model.metrics 
+tidy(belim_model) |>arrange(p.value) |> mutate(remove=p.value>0.05)
+```
+
+### Remove mpg
+```{r}
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = select(auto_train,-cylinders, -mpg))
+
+rbind(model.metrics,glance(belim_model)) -> model.metrics 
+tidy(belim_model) |>arrange(p.value) |> mutate(remove=p.value>0.05)
+```
+
+### Remove year
+```{r}
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = select(auto_train,-cylinders, -mpg, -year))
+
+rbind(model.metrics,glance(belim_model)) -> model.metrics 
+tidy(belim_model) |>arrange(p.value) |> mutate(remove=p.value>0.05)
+```
+
+
+```{r}
+model.metrics
+```
+
+Everything is significant now. This is our final model.
+
+```{r}
+ggpairs(data = select(auto_train,-c(cylinders, mpg, year)) |>
+          na.omit())
+```
+
+The plot shows strong evidence of multicollinearity among the predictors, between displacement, horsepower, and weight. The reported correlations between the predictors are extremely high: displacement–weight (r = 0.941), displacement–horsepower (r = 0.898), and horsepower–weight (r = 0.883). These nearly linear scatterplot patterns indicate that these variables carry overlapping information about vehicle “size/power.” As a result, in a multiple linear regression, it becomes difficult to isolate each variable’s unique contribution: coefficient estimates can become unstable, standard errors can be inflated, and variables may appear non-significant even if they are related to acceleration—because much of their explanatory power is shared with the other correlated predictors. This is why backward selection (or VIF-based screening/regularization) is helpful here: it reduces redundancy among predictors while keeping the model interpretable.
+But for this analysis, the variables are not removed because of their significance shown by the p-value.
+
+```{r}
+vif(belim_model$fit)
+```
+
+Since VIF for displacement is greater than 10 (which is the threshold), removing displacement from the final model.
+
+```{r}
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = select(auto_train,-cylinders, -mpg, -year, -displacement))
+
+rbind(model.metrics,glance(belim_model)) -> model.metrics 
+tidy(belim_model) |>arrange(p.value) |> mutate(remove=p.value>0.05)
+```
+```{r}
+vif(belim_model$fit)
+```
+Removing `displacement` improved the VIF score, but let's also check the model performance.
+
+```{r}
+model.metrics
+```
+
+Since, the model performance did not improve, rather degraded (looking at $R^2$ values), I am deciding not to remove `displacement` from the final model.
+
+### Final Model
+$$
+\text{acceleration} \sim \text{displacement} + \text{horsepower} + \text{weight}
+$$
+
+```{r}
+belim_model <- lm_spec |>
+  fit(acceleration ~ ., data = select(auto_train, -cylinders, -mpg, -year))
+glance(belim_model)
+```
+
+
+
+```{r}
+# Coefficient table for interpretation
+tidy(belim_model)
+```
+
+
+#### Interpreting the fitted multiple linear regression model
+
+$$
+\widehat{acceleration} = 16.7808 - 0.0119 \times displacement - 0.0915 \times horssepower + 0.0036 \times weight
+$$
+
+
+#### Interpretation of all predictors
+
+* **Intercept = 16.7808**
+
+The intercept (16.7808) is the predicted 0–60 acceleration time (seconds) when displacement, horsepower, and weight are all zero. Since a car cannot realistically have zero displacement/horsepower/weight, the intercept is mainly a baseline mathematical reference point rather than a meaningful real-world value.
+
+
+##### Displacement
+
+* **Displacement = -0.0119**
+
+Holding horsepower and weight constant, a one-unit increase in displacement is associated with a 0.0119 second decrease in predicted 0–60 time. In other words, larger displacement is associated with slightly faster acceleration (smaller time), although the effect per single cubic inch is small.
+
+
+##### Horsepower
+
+* **Horsepower = -0.0915**
+
+Holding displacement and weight constant, a one-unit increase in horsepower is associated with a 0.0915 second decrease in predicted 0–60 time. That means higher horsepower tends to produce faster acceleration (lower time), and the size of the effect is noticeable compared with displacement.
+
+##### Weight
+
+* **Weight = 0.0036**
+
+Holding displacement and horsepower constant, a one-unit increase in weight is associated with a 0.0036 second increase in predicted 0–60 time. That means heavier cars are predicted to accelerate more slowly (larger time). Because weight is measured in pounds, changes of hundreds of pounds can translate into a meaningful change in acceleration time.
+
+
+-----
+
+### Accuracy of the model
+
+
+```{r}
+# Predictions + accuracy
+auto_metrics <- metric_set(rmse, rsq, mae)
+
+train_pred <- predict(belim_model, new_data = auto_train) |>
+  bind_cols(auto_train)
+
+test_pred <- predict(belim_model, new_data = auto_test) |>
+  bind_cols(auto_test)
+
+# Metrics
+auto_metrics(train_pred, truth = acceleration, estimate = .pred)
+auto_metrics(test_pred, truth = acceleration, estimate = .pred)
+
+
+rsq(train_pred, truth = acceleration, estimate = .pred)
+rsq(test_pred, truth = acceleration, estimate = .pred)
+
+# Quick plot: predicted vs actual on test set
+test_pred |>
+  ggplot(aes(x = acceleration, y = .pred)) +
+  geom_point(alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0)
+
+```
+##### Interpretation
+The predicted vs. actual plot on the test set shows predictions mostly tracking the 45° line, meaning the model captures the main trend in acceleration reasonably well. The test RMSE is 1.89 and MAE is 1.41, so typical prediction errors are on the order of 1–2 seconds, which matches the visible scatter around the line. There is a mild pattern where the model tends to underpredict at the highest acceleration times (some points at high actual values fall below the line), suggesting the linear model struggles a bit at the extreme slow-acceleration end. Overall, test $R^2$ = 0.629, so the model explains about 63\% of the variation in acceleration on unseen data.
+
+
+### Model Assessment
+
+
+```{r}
+# Diagnostics / model assessment
+lm_engine <- extract_fit_engine(belim_model)
+
+# Get fitted values + residuals in a tidy way
+diag_df <- broom::augment(lm_engine)
+
+# Confidence Interval for coefficients
+broom::tidy(lm_engine, conf.int = TRUE, conf.level = 0.95)
+
+# Residuals vs fitted (linearity + constant variance check)
+diag_df |>
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = 0)
+
+# Normal Q-Q plot (normality of residuals)
+diag_df |>
+  ggplot(aes(sample = .std.resid)) +
+  stat_qq() +
+  stat_qq_line()
+
+# Scale-Location plot (another look at constant variance)
+diag_df |>
+  ggplot(aes(x = .fitted, y = sqrt(abs(.std.resid)))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(
+    title = "Scale–Location Plot",
+    x = "Fitted Values",
+    y = "Square Root of Absolute Standardized Residuals"
+  )
+
+# Leverage / influence
+diag_df |>
+  ggplot(aes(x = .hat, y = .std.resid)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = c(-2, 0, 2), linetype = "dashed") +
+  labs(
+    title = "Standardized Residuals vs Leverage",
+    x = "Leverage (Hat Values)",
+    y = "Standardized Residuals"
+  )
+```
+
+The diagnostics suggest the linear model is broadly reasonable but not perfect. 
+
+The residuals vs fitted plot shows residuals generally centered around zero without strong curvature, so there isn’t clear evidence of a major non-linear structure being missed. However, assumptions are slightly imperfect because variance looks a bit uneven and there are a few outliers. 
+
+The Q–Q plot is close to linear in the middle but bends away in the tails, indicating mild non-normality / heavier tails, driven by a few larger standardized residuals. 
+
+The scale–location plot shows the LOESS curve dipping and then rising again, which suggests slightly non-constant variance (residual spread changes with fitted values rather than staying perfectly flat). 
+
+Finally, the standardized residuals vs leverage plot shows most observations have low leverage, but there are a few higher-leverage points (around hat values near ~0.06), including one with a large positive standardized residual; these may be potentially influential and worth checking, though they appear to be only a small number of cases.

@@ -1,0 +1,945 @@
+---
+title: "Predicting Educational Success"
+author: "Kabin Devkota"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+subtitle: "STA 631 - GLM Project"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+---
+
+# Summary of Insights
+
+## Research Question
+
+This project investigates: **What family engagement and school choice factors predict a child's academic success, and how does parental involvement relate to school participation frequency?**
+
+We analyze data from the 2019 Parent and Family Involvement (PFI) in Education Survey, collected by the US Census Bureau for the Department of Education. The dataset contains 15,500 observations, each representing one K-12 student, with variables covering school type, family engagement behaviors, child academic outcomes, and household demographics. We focus on 2019 only (rather than pooling 2016 and 2019) because survey instruments, question wording, and variable coding can differ across administration years; using a single year ensures internal consistency without requiring cross-year harmonization.
+
+## Key Findings
+
+**Family engagement matters, but differently for different outcomes.** School involvement — attending events, volunteering, attending meetings, and participating in fundraising — is consistently the strongest predictor of academic achievement across all models. Children whose parents participate more in school activities are more likely to earn mostly A's and less likely to earn D's or below.
+
+**Parent education and household income are strong independent predictors.** Children of graduate-educated parents have dramatically higher odds of being high academic achievers compared to children of parents without a high school diploma, even after controlling for school involvement and demographics. Similarly, higher household income is associated with better academic outcomes.
+
+**Single-parent households show lower school participation.** Parents in single-parent households participate in fewer school activities than those in two-parent households, though their children's grades are not dramatically different once other factors are controlled for.
+
+**School type matters for both participation and grades.** Children in non-public schools have parents who participate in school activities more frequently. After controlling for demographics, attending a non-public school is associated with slightly *higher* odds of being a high achiever (OR = 1.23). The multinomial model also shows non-public school students are far less likely to receive D's or below, likely reflecting selection effects — families who choose private schooling differ systematically from those who do not.
+
+**Racial and ethnic disparities exist in both participation and grades.** Black and Hispanic families participate less in school activities than White families, and their children are less likely to receive mostly A's. Asian/Pacific Islander families also participate less but their children have lower odds of being non-high-achievers (meaning better grades). These disparities persist after controlling for income and parent education, suggesting structural factors beyond socioeconomic status.
+
+**Disability status is the single strongest predictor of grades.** Children without a disability have dramatically higher odds of earning mostly A's — this is the largest effect in every model we fit.
+
+---
+
+# Modeling Process Summary
+
+## Libraries
+
+```{r libraries}
+library(MASS)       # load first — its select() is masked by dplyr below
+library(tidyverse)
+library(tidymodels)
+library(readxl)
+library(GGally)
+library(ggformula)
+library(discrim)
+library(nnet)
+library(themis)
+library(poissonreg) # for tidymodels-compatible Poisson
+library(car)        # for vif()
+```
+
+We load `MASS` first intentionally — it has a `select()` function that conflicts with `dplyr::select()`. Loading it before `tidyverse` ensures that `dplyr::select()` takes precedence throughout the document. We use `dplyr::select()` explicitly wherever needed as an additional safeguard.
+
+---
+
+## 1. Data Loading
+
+```{r load-data}
+pfi <- read_excel("pfi_data_2019.xlsx")
+cat("Rows:", nrow(pfi), "| Cols:", ncol(pfi), "\n")
+```
+
+We use only the 2019 survey year. The dataset contains 15,500 observations and 75 variables. We read it directly from the Excel file as required by the project instructions.
+
+---
+
+## 2. Variable Selection and Missing Value Treatment
+
+```{r select-vars}
+pfi <- pfi %>%
+  dplyr::select(
+    BASMID,
+    # --- Response variables ---
+    SEGRADES,       # Child's letter grades (1=A, 2=B, 3=C, 4=D/below, 5=no grades)
+    SEGRADEQ,       # Parent's subjective assessment of child's school work
+    SEENJOY,        # Child enjoyment of school (kept for EDA only; endogenous to grades)
+    SEABSNT,        # Days absent (kept for EDA only; endogenous to grades)
+    SEFUTUREX,      # Parent's educational expectations for child (endogenous; EDA only)
+    # --- Count outcome ---
+    FSFREQ,         # Times participated in school meetings/activities (count, 0-99)
+    # --- School involvement binary indicators (8 items -> composite score) ---
+    FSSPORTX,       # Attended school event (sports, play, fair)
+    FSVOL,          # Served as volunteer at school
+    FSMTNG,         # Attended general school meeting (open house)
+    FSPTMTNG,       # Attended PTA/PTO meeting
+    FSATCNFN,       # Attended parent-teacher conference
+    FSFUNDRS,       # Participated in fundraising
+    FSCOMMTE,       # Served on school committee
+    FSCOUNSLR,      # Met with guidance counselor
+    # --- School communication (not used in models; informational) ---
+    FSNOTESX, FSMEMO,
+    # --- School satisfaction ratings (used in EDA context) ---
+    FCSCHOOL, FCTEACHR, FCSTDS, FCORDER, FCSUPPRT,
+    # --- Homework engagement ---
+    FHHOME,         # Homework done at home
+    FHWKHRS,        # Hours spent on homework (6.8% missing: valid skip for no-homework)
+    FHCHECKX,       # Parent checks homework
+    FHHELP,         # Parent helps with homework
+    # --- Home engagement binary indicators (7 items -> composite score) ---
+    FOSTORY2X,      # Read stories together
+    FOCRAFTS,       # Did crafts/art projects
+    FOGAMES,        # Played games
+    FOBUILDX,       # Did building projects
+    FOSPORT,        # Did athletic activities
+    FORESPON,       # Did community service/volunteering
+    FOHISTX,        # Visited historical sites
+    # --- Other home activities ---
+    FODINNERX,      # Days ate dinner together (0-7; used in LDA/QDA as continuous)
+    FOLIBRAYX,      # Visited library
+    FOBOOKSTX,      # Visited bookstore
+    # --- School choice variables (selected for initial review; see note in Section 2) ---
+    EDCPUB,         # Public school (Yes/No) -- key school type predictor
+    SPUBCHOIX,      # District allows school choice
+    SCONSIDR,       # Considered other schools
+    SCCHOICE,       # Felt choice in school attendance
+    # --- Child demographics ---
+    CSEX,           # Child sex (1=Male, 2=Female)
+    RACEETH,        # Race/ethnicity (1=White, 2=Black, 3=Hispanic, 4=Asian/PI, 5=Other)
+    # --- Household demographics (controls) ---
+    PARGRADEX,      # Highest parent/guardian education (1=<HS ... 5=Grad school)
+    TTLHHINC,       # Total household income (1-12 ordered categories)
+    HHPARN19_BRD,   # Household has second parent/guardian (1=Two, 2=Single)
+    DSBLTY,         # Child disability status (1=Has disability, 2=No disability)
+    INTACC,         # Internet access (1=Home+cell, 2=Home only, 3=Cell only, 4=None)
+    CENREG,         # Census region (1=NE, 2=South, 3=Midwest, 4=West)
+    ALLGRADEX,      # Child's current grade (2=Kinder ... 15=12th grade)
+    P1MRSTA,        # Primary parent marital status
+    HHTOTALXX,      # Total household members
+    NUMSIBSX        # Number of siblings (0-7; used in LDA/QDA as continuous)
+  )
+
+# Recode all negative values as NA
+# In PFI data, negative codes (-1 = valid skip, -9 = missing) are not real values
+pfi <- pfi %>%
+  mutate(across(everything(), ~ ifelse(. < 0, NA, .)))
+
+# Missingness summary
+missing_tbl <- pfi %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(),
+               names_to  = "variable",
+               values_to = "n_missing") %>%
+  mutate(pct_missing = round(n_missing / nrow(pfi) * 100, 1)) %>%
+  arrange(desc(pct_missing))
+
+print(missing_tbl, n = 25)
+```
+
+**Variable selection rationale:** We selected variables covering five domains: (1) child academic outcomes as response variables, (2) school involvement activities as key predictors of interest, (3) home engagement behaviors, (4) school type and choice, and (5) household demographics as statistical controls. The selection was guided by the project's focus on school choice and family engagement.
+
+**Variables selected but not used in models — explicit justification:**
+
+- `SCCHOICE`, `SPUBCHOIX`, `SCONSIDR`: These school choice variables were pulled for initial exploration but dropped from final models. `SCCHOICE` (felt choice in school) and `SPUBCHOIX` (district allows choice) are highly correlated with `EDCPUB` — families in non-public schools by definition exercised school choice — creating multicollinearity. `SCONSIDR` (considered other schools) is similarly collinear. Including them alongside `EDCPUB` would inflate standard errors without adding independent information.
+
+- `SEENJOY`, `SEABSNT`, `SEFUTUREX`: These are **endogenous** to grades — a child's enjoyment of school, attendance, and parental expectations are partly caused by or jointly determined with academic performance. Including them as predictors of grades would introduce simultaneity bias. They are kept in the dataset for EDA context only.
+
+- `CENREG` / `ZIPLOCL`: Census region and urbanicity were considered but excluded. After controlling for income (`TTLHHINC`) and race/ethnicity (`RACEETH`) — which themselves capture much of the regional variation in resources and demographics — region added minimal additional predictive value in preliminary models while increasing the number of parameters substantially.
+
+- `INTACC`: The codebook shows 92.7% of households have both home and cell internet access — the variable is nearly constant and contributes almost no variance to any model.
+
+- `ALLGRADEX`: Grade level (K-12) is a legitimate control but is highly correlated with age and introduces interpretation complexity in a cross-sectional model. We exclude it to keep the model parsimonious, though we acknowledge this as a limitation.
+
+**Variables included as controls and why:**
+
+- `CSEX`: Well-documented gender gap in academic achievement (girls tend to earn higher grades); standard control in education research.
+- `TTLHHINC`: Household income (12-level ordered categorical) is the primary socioeconomic status proxy; directly affects resources available for school participation.
+- `RACEETH`: Racial/ethnic disparities in K-12 education are extensively documented; including it isolates the effect of family involvement from structural inequities.
+- `DSBLTY`: Disability status directly and mechanically affects grading and school participation; the most critical confounder in this dataset.
+- `HHPARN19_BRD`: Household structure (two-parent vs. single-parent) affects both time available for school involvement and household resources.
+
+**Why `EDCPUB` (binary) instead of separate school type categories:**
+
+The PFI survey asks school type as a series of separate binary Yes/No questions — `EDCPUB` (public/charter), `EDCCAT` (Catholic private), `EDCREL` (private religious non-Catholic), `EDCPRI` (private non-religious), `EDCINTK12` (full-time online). These are not mutually exclusive levels of a single variable; they are separate indicators. `EDCPUB` (86.3% Yes, 13.7% No) cleanly partitions the school-enrolled sample. Breaking non-public schools into sub-types would create very small cells — Catholic: 4.2%, religious non-Catholic: 3.8%, private secular: 3.1%, online K-12: 1.6% — too sparse for stable parameter estimation in a logistic or multinomial model. The binary public/non-public distinction captures the main policy-relevant contrast (public vs. private sector schooling) while maintaining adequate cell sizes.
+
+**Missing value treatment:** In the PFI dataset, negative values are special codes — `-1` means "valid skip" (question not applicable to this respondent) and `-9` means missing. Neither represents a real data value, so we recode all negative entries to `NA` before any analysis.
+
+**Missingness assessment:** The three homework-related variables (`FHWKHRS`, `FHCHECKX`, `FHHELP`) have 6.8% missing — these apply only to students who do homework, so valid skips account for this. All other variables have less than 1% missing. Overall missingness is low and will not substantially affect our results.
+
+---
+
+## 3. Filtering to School-Enrolled Students
+
+```{r filter}
+pfi <- pfi %>% filter(!is.na(FCSCHOOL))
+cat("After filtering to school students:", nrow(pfi), "\n")
+
+pfi <- pfi %>%
+  filter(!is.na(SEGRADES), !is.na(FSFREQ), !is.na(SEGRADEQ))
+cat("After dropping missing outcomes:", nrow(pfi), "\n")
+```
+
+We filter to students who have school satisfaction data (`FCSCHOOL` not missing), which effectively removes homeschool-only students who were not enrolled in any school. These students have valid skips on all school-related variables and would introduce systematic bias if included. We then remove the small number of rows (73) missing key response variables.
+
+---
+
+## 4. Variable Recoding
+
+```{r recode}
+pfi <- pfi %>%
+  mutate(
+    SEGRADES = ifelse(SEGRADES == 5, NA, SEGRADES),
+    SEGRADES = factor(SEGRADES, levels = 1:4,
+                      labels = c("Mostly_As", "Mostly_Bs",
+                                 "Mostly_Cs", "Mostly_Ds_lower")),
+    SEGRADEQ = factor(SEGRADEQ, levels = 1:5,
+                      labels = c("Excellent", "Above_avg", "Average",
+                                 "Below_avg", "Failing")),
+    SEENJOY  = factor(SEENJOY, levels = 1:4,
+                      labels = c("Strongly_agree", "Agree",
+                                 "Disagree", "Strongly_disagree")),
+    RACEETH  = factor(RACEETH, levels = 1:5,
+                      labels = c("White", "Black", "Hispanic",
+                                 "Asian_PI", "Other")),
+    CSEX     = factor(CSEX, levels = 1:2,
+                      labels = c("Male", "Female")),
+    HHPARN19_BRD = factor(HHPARN19_BRD, levels = 1:2,
+                          labels = c("Two_parents", "Single_parent")),
+    DSBLTY   = factor(DSBLTY, levels = 1:2,
+                      labels = c("Has_disability", "No_disability")),
+    PARGRADEX = factor(PARGRADEX, levels = 1:5,
+                       labels = c("Less_than_HS", "HS_grad",
+                                  "Some_college", "College_grad",
+                                  "Grad_school")),
+    EDCPUB   = factor(EDCPUB, levels = 1:2,
+                      labels = c("Public", "Not_public")),
+    INTACC   = factor(INTACC, levels = 1:4,
+                      labels = c("Home_and_cell", "Home_only",
+                                 "Cell_only", "No_internet")),
+    CENREG   = factor(CENREG, levels = 1:4,
+                      labels = c("Northeast", "South", "Midwest", "West")),
+    across(c(FSSPORTX, FSVOL, FSMTNG, FSPTMTNG, FSATCNFN,
+             FSFUNDRS, FSCOMMTE, FSCOUNSLR,
+             FOSTORY2X, FOCRAFTS, FOGAMES, FOBUILDX,
+             FOSPORT, FORESPON, FOHISTX,
+             FOLIBRAYX, FOBOOKSTX),
+           ~ ifelse(. == 1, 1L, ifelse(. == 2, 0L, NA_integer_)))
+  )
+```
+
+**Key recoding decisions:**
+
+- `SEGRADES` code 5 ("School does not give these grades") is excluded as `NA` — these students attend schools without traditional grading systems and cannot be meaningfully compared on this outcome. This removes approximately 1,957 observations.
+- All binary school/home activity variables originally coded 1=Yes, 2=No are recoded to 1=Yes, 0=No for interpretability when summed into composite scores.
+- All categorical variables are converted to labeled factors. Reference levels are: `RACEETH = White`, `PARGRADEX = Less_than_HS`, `EDCPUB = Public`, `DSBLTY = Has_disability`, `HHPARN19_BRD = Two_parents`, `CSEX = Male`. All coefficient interpretations are relative to these baselines.
+
+---
+
+## 5. Composite Scores and Derived Variables
+
+```{r composites}
+pfi <- pfi %>%
+  mutate(
+    # Sum of 8 binary school activity indicators (0-8 scale)
+    school_involve_score = rowSums(
+      dplyr::select(., FSSPORTX, FSVOL, FSMTNG, FSPTMTNG,
+                       FSATCNFN, FSFUNDRS, FSCOMMTE, FSCOUNSLR),
+      na.rm = TRUE),
+
+    # Sum of 7 binary home engagement indicators (0-7 scale)
+    home_engage_score = rowSums(
+      dplyr::select(., FOSTORY2X, FOCRAFTS, FOGAMES, FOBUILDX,
+                       FOSPORT, FORESPON, FOHISTX),
+      na.rm = TRUE),
+
+    # Binary high achiever outcome: "No" first so "Yes" is the tidymodels event level
+    high_achiever = factor(
+      ifelse(SEGRADES == "Mostly_As", "Yes", "No"),
+      levels = c("No", "Yes")
+    )
+  )
+
+cat("SEGRADES distribution:\n")
+print(table(pfi$SEGRADES, useNA = "ifany"))
+
+cat("\nHigh achiever distribution:\n")
+print(table(pfi$high_achiever, useNA = "ifany"))
+
+cat("\nFSFREQ summary:\n")
+print(summary(pfi$FSFREQ))
+
+cat("\nSchool involvement score:\n")
+print(summary(pfi$school_involve_score))
+
+cat("\nFinal dataset:", nrow(pfi), "rows x", ncol(pfi), "cols\n")
+```
+
+**Composite score rationale:** We created two summary scores rather than including all individual binary items as separate predictors. This reduces dimensionality, avoids multicollinearity among items measuring the same construct (school involvement and home engagement are each internally correlated), and produces more interpretable coefficients. `school_involve_score` (0-8) counts how many of 8 school activities a household participated in this school year. `home_engage_score` (0-7) counts how many of 7 home engagement activities occurred in the past week.
+
+**Binary outcome and event level:** `high_achiever` is set with levels `c("No", "Yes")` so that "Yes" is the **second** (event) level, which is tidymodels' default event class for binary classification. This means all metrics — accuracy, precision, recall, F1, AUC — are computed with respect to correctly identifying high achievers (Yes = Mostly A's). All ROC and AUC calculations use `.pred_Yes`.
+
+---
+
+## 6. Exploratory Data Analysis
+
+### 6.1 FSFREQ Distribution and Overdispersion Check
+
+```{r eda-fsfreq-dist}
+pfi %>%
+  ggplot(aes(x = FSFREQ)) +
+  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of School Participation Count (FSFREQ)",
+       subtitle = "Right-skewed count variable — candidate for Poisson regression",
+       x = "Times participated in school activities", y = "Count")
+
+cat("FSFREQ mean:     ", mean(pfi$FSFREQ, na.rm = TRUE), "\n")
+cat("FSFREQ variance: ", var(pfi$FSFREQ,  na.rm = TRUE), "\n")
+cat("Ratio (var/mean):",
+    var(pfi$FSFREQ, na.rm = TRUE) /
+    mean(pfi$FSFREQ, na.rm = TRUE), "\n")
+```
+
+**Overdispersion finding:** The variance-to-mean ratio for `FSFREQ` is approximately 12.2 — far greater than 1. Standard Poisson regression assumes variance equals the mean (ratio = 1). A ratio this high indicates severe overdispersion, meaning standard Poisson will underestimate standard errors and produce falsely significant results. We address this by using **Negative Binomial regression** instead, which adds a dispersion parameter to account for excess variance. The Poisson model is still fit below for comparison and is explicitly demonstrated as required by the project.
+
+### 6.2 Grade Distribution
+
+```{r eda-grades}
+pfi %>%
+  filter(!is.na(SEGRADES)) %>%
+  ggplot(aes(x = SEGRADES)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of Child Grades (2019 PFI)",
+       subtitle = "Imbalanced — Mostly A's dominates",
+       x = "Grade Category", y = "Count")
+```
+
+The grade distribution is heavily right-skewed: 7,574 students receive mostly A's compared to only 243 receiving mostly D's or lower. This **class imbalance** is a modeling concern for multinomial regression — a naive model will learn to ignore the minority classes. We address this with upsampling in Section 10.
+
+### 6.3 Family Involvement vs Grades
+
+```{r eda-involvement}
+pfi %>%
+  filter(!is.na(SEGRADES)) %>%
+  ggplot(aes(x = SEGRADES, y = school_involve_score)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "School Involvement Score by Grade",
+       x = "Grade Category", y = "School Involvement Score (0-8)")
+
+pfi %>%
+  filter(!is.na(SEGRADES)) %>%
+  ggplot(aes(x = SEGRADES, y = home_engage_score)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Home Engagement Score by Grade",
+       x = "Grade Category", y = "Home Engagement Score (0-7)")
+
+pfi %>%
+  filter(!is.na(SEGRADES)) %>%
+  ggplot(aes(x = SEGRADES, y = FSFREQ)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "School Participation Frequency by Grade",
+       x = "Grade Category", y = "Times Participated (FSFREQ)")
+```
+
+Higher-achieving students tend to have parents with higher school involvement scores. The relationship with home engagement is weaker but still present. School participation frequency (`FSFREQ`) shows a similar pattern — parents of A students participate more often. These patterns motivate including both scores as predictors in all models.
+
+### 6.4 Demographics vs Grades
+
+```{r eda-demographics}
+pfi %>%
+  filter(!is.na(SEGRADES), !is.na(PARGRADEX)) %>%
+  ggplot(aes(x = PARGRADEX, fill = SEGRADES)) +
+  geom_bar(position = "fill") +
+  labs(title = "Grade Distribution by Parent Education",
+       x = "Parent Education", y = "Proportion") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+pfi %>%
+  filter(!is.na(SEGRADES), !is.na(RACEETH)) %>%
+  ggplot(aes(x = RACEETH, fill = SEGRADES)) +
+  geom_bar(position = "fill") +
+  labs(title = "Grade Distribution by Race/Ethnicity",
+       x = "Race/Ethnicity", y = "Proportion")
+
+pfi %>%
+  filter(!is.na(SEGRADES), !is.na(HHPARN19_BRD)) %>%
+  ggplot(aes(x = HHPARN19_BRD, fill = SEGRADES)) +
+  geom_bar(position = "fill") +
+  labs(title = "Grade Distribution by Household Structure",
+       x = "Household Type", y = "Proportion")
+```
+
+Parent education shows a strong gradient — the proportion of A students increases substantially with each educational level. Two-parent households have a higher proportion of A students than single-parent households. Racial and ethnic disparities are visible across all grade categories.
+
+### 6.5 FSFREQ vs Key Predictors
+
+```{r eda-fsfreq-predictors}
+pfi %>%
+  filter(!is.na(PARGRADEX)) %>%
+  ggplot(aes(x = PARGRADEX, y = FSFREQ)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "School Participation by Parent Education",
+       x = "Parent Education", y = "FSFREQ") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+pfi %>%
+  filter(!is.na(EDCPUB)) %>%
+  ggplot(aes(x = EDCPUB, y = FSFREQ)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "School Participation by School Type",
+       x = "School Type", y = "FSFREQ")
+
+pfi %>%
+  filter(!is.na(HHPARN19_BRD)) %>%
+  ggplot(aes(x = HHPARN19_BRD, y = FSFREQ)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "School Participation by Household Structure",
+       x = "Household Type", y = "FSFREQ")
+```
+
+Parents in non-public schools and two-parent households show higher median participation counts. Parent education shows a positive trend — more educated parents participate more. These patterns motivate our predictor selection for the count model.
+
+---
+
+## 7. Data Splitting
+
+```{r split}
+set.seed(631)
+
+# Classification dataset
+pfi_model <- pfi %>%
+  filter(!is.na(SEGRADES), !is.na(high_achiever)) %>%
+  drop_na(school_involve_score, home_engage_score,
+          PARGRADEX, RACEETH, TTLHHINC,
+          HHPARN19_BRD, DSBLTY, EDCPUB, CSEX)
+
+# Count dataset for NB/Poisson regression
+pfi_count <- pfi %>%
+  drop_na(FSFREQ, school_involve_score, home_engage_score,
+          PARGRADEX, RACEETH, TTLHHINC,
+          HHPARN19_BRD, DSBLTY, EDCPUB, CSEX)
+
+split_model <- initial_split(pfi_model, prop = 0.80, strata = SEGRADES)
+train_model <- training(split_model)
+test_model  <- testing(split_model)
+
+split_count <- initial_split(pfi_count, prop = 0.80, strata = FSFREQ)
+train_count <- training(split_count)
+test_count  <- testing(split_count)
+
+cat("Classification train/test:", nrow(train_model), "/", nrow(test_model), "\n")
+cat("Count model train/test:   ", nrow(train_count), "/", nrow(test_count), "\n")
+```
+
+We use an 80/20 train/test split stratified on the response variable to preserve class distributions — critical given grade imbalance. The test set is held out completely and only used for final evaluation. Two separate datasets are created because the Poisson/NB models include additional observations that have `FSFREQ` but may be missing `SEGRADES`.
+
+---
+
+## 8. Poisson and Negative Binomial Regression
+
+**Research question:** What factors predict how frequently parents participate in school activities?
+
+### 8.1 Why Start with Poisson
+
+`FSFREQ` records how many times any adult in the household went to school meetings or activities during the school year. It is a non-negative integer count (range: 0-99), which makes Poisson regression the natural starting point. The Poisson GLM models the log of the expected count as a linear function of predictors:
+
+$$\log(\hat{\mu}_i) = \beta_0 + \beta_1 x_{i1} + \cdots + \beta_p x_{ip}$$
+
+where $\hat{\mu}_i = E(\text{FSFREQ}_i)$.
+
+```{r poisson-model}
+count_formula <- FSFREQ ~ school_involve_score + home_engage_score +
+                           PARGRADEX + TTLHHINC + HHPARN19_BRD +
+                           EDCPUB + RACEETH + CSEX + DSBLTY
+
+# --- Poisson model via tidymodels (as required) ---
+pois_spec <- poisson_reg() %>%
+  set_engine("glm") %>%
+  set_mode("regression")
+
+pois_tm <- pois_spec %>%
+  fit(count_formula, data = train_count)
+
+cat("=== Poisson Model (tidymodels) ===\n")
+tidy(pois_tm)
+glance(pois_tm)
+
+# Also fit via base glm for AIC comparison
+pois_mod <- glm(count_formula, data = train_count, family = poisson(link = "log"))
+
+# Check overdispersion
+cat("\nOverdispersion check:\n")
+cat("Residual deviance:", pois_mod$deviance, "\n")
+cat("Degrees of freedom:", pois_mod$df.residual, "\n")
+cat("Ratio (should be ~1 for no overdispersion):", 
+    round(pois_mod$deviance / pois_mod$df.residual, 2), "\n")
+
+cat("\nPoisson AIC:", AIC(pois_mod), "\n")
+```
+
+**Overdispersion diagnosis:** The ratio of residual deviance to degrees of freedom far exceeds 1, confirming severe overdispersion. The EDA variance-to-mean ratio of 12.2 also flags this. Standard Poisson is invalid here because its standard errors will be severely underestimated, producing spuriously significant p-values. We proceed to Negative Binomial regression.
+
+### 8.2 Negative Binomial — Model Selection
+
+```{r negative-binomial}
+# NOTE: Negative Binomial is not available as a native tidymodels engine.
+# {poissonreg} supports only standard Poisson. We fit NB via MASS::glm.nb()
+# directly, consistent with the class notebooks (Poisson.Rmd uses this approach).
+# The tidymodels-compliant Poisson model above satisfies the tidymodels requirement.
+
+# Candidate Model 1: NB full model
+nb_mod <- glm.nb(count_formula, data = train_count)
+
+# Candidate Model 2: NB reduced (removing EDCPUB, CSEX)
+nb_mod_reduced <- glm.nb(
+  FSFREQ ~ school_involve_score + home_engage_score +
+            PARGRADEX + TTLHHINC + HHPARN19_BRD + RACEETH + DSBLTY,
+  data = train_count)
+
+# Model comparison
+cat("Poisson AIC:    ", AIC(pois_mod),       "\n")
+cat("NB full AIC:    ", AIC(nb_mod),         "\n")
+cat("NB reduced AIC: ", AIC(nb_mod_reduced), "\n")
+cat("AIC improvement (Poisson -> NB full):", 
+    round(AIC(pois_mod) - AIC(nb_mod), 0), "\n")
+
+# Likelihood ratio test: full vs reduced NB
+anova(nb_mod_reduced, nb_mod, test = "Chisq")
+```
+
+### 8.3 Final Negative Binomial Model
+
+```{r nb-final}
+summary(nb_mod)
+
+# Exponentiated coefficients (multiplicative effects on expected count)
+tidy(nb_mod) %>%
+  mutate(exp_estimate = exp(estimate),
+         exp_conf_low  = exp(estimate - 1.96 * std.error),
+         exp_conf_high = exp(estimate + 1.96 * std.error)) %>%
+  dplyr::select(term, estimate, exp_estimate, exp_conf_low, exp_conf_high, p.value) %>%
+  arrange(p.value)
+
+# Test set evaluation
+nb_pred  <- predict(nb_mod, newdata = test_count, type = "response")
+nb_rmse  <- sqrt(mean((test_count$FSFREQ - nb_pred)^2))
+nb_mae   <- mean(abs(test_count$FSFREQ - nb_pred))
+cat("\nNB Test RMSE:", round(nb_rmse, 3), "\n")
+cat("NB Test MAE: ", round(nb_mae,  3), "\n")
+
+# Predicted vs actual
+tibble(actual = test_count$FSFREQ, predicted = nb_pred) %>%
+  ggplot(aes(x = actual, y = predicted)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Negative Binomial: Predicted vs Actual FSFREQ",
+       subtitle = "Points near the red line indicate accurate predictions",
+       x = "Actual FSFREQ", y = "Predicted FSFREQ")
+
+# Pearson residuals vs fitted
+tibble(fitted = fitted(nb_mod),
+       resid  = residuals(nb_mod, type = "pearson")) %>%
+  ggplot(aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "NB Pearson Residuals vs Fitted",
+       subtitle = "Residuals should be centered at 0 with no clear pattern",
+       x = "Fitted Values", y = "Pearson Residuals")
+```
+
+**Model selection:** Three models were compared. The Poisson model (AIC ≈ 104,068) is dramatically worse than both NB models — an improvement of ~35,000 AIC points — confirming severe overdispersion makes Poisson inappropriate. The full NB model (AIC = 69,124) outperforms the reduced NB model (AIC = 69,180). A likelihood ratio test confirms the full model is significantly better (p < 0.001), justifying inclusion of school type (`EDCPUB`) and child sex (`CSEX`).
+
+**Interpretation of key coefficients** (exponentiated = multiplicative effect on expected FSFREQ, holding all else constant):
+
+- `school_involve_score`: exp(0.256) = 1.29 — each additional school activity participated in multiplies expected participation count by 1.29. This is the dominant predictor by far.
+- `EDCPUBNot_public`: exp(0.174) = 1.19 — parents of non-public school students participate 19% more often than public school parents.
+- `RACEETHBlack`: exp(-0.233) = 0.79 — Black families participate 21% less than White families on average.
+- `RACEETHAsian_PI`: exp(-0.400) = 0.67 — Asian/Pacific Islander families participate 33% less than White families.
+- `HHPARN19_BRDSingle_parent`: exp(-0.031) = 0.97 — single parents participate slightly less; marginally significant (p = 0.097).
+- `DSBLTYNo_disability`: exp(0.051) = 1.05 — families of children without disabilities participate slightly more.
+
+**Test performance:** RMSE = 8.12, MAE = 4.40 on the test set. Given `FSFREQ` ranges 0-99 with mean 7.0, the model captures the central tendency well but struggles with extreme values, which is expected given the heavy right tail. The residuals vs. fitted plot shows residuals centered at 0 with no systematic pattern, suggesting the model fit is adequate.
+
+---
+
+## 9. Logistic Regression
+
+**Research question:** What factors predict whether a child is a high academic achiever (mostly A's)?
+
+**Why logistic regression?** `high_achiever` is a binary outcome (Yes/No). Logistic regression models the log-odds of the event as a linear combination of predictors:
+
+$$\log\left(\frac{\hat{p}}{1-\hat{p}}\right) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p$$
+
+It produces interpretable odds ratios and allows formal hypothesis testing for each predictor while handling the mix of continuous and categorical predictors in our dataset.
+
+### 9.1 Model Fitting and Selection
+
+```{r logistic}
+logistic_full <- high_achiever ~ school_involve_score + home_engage_score +
+                                  PARGRADEX + TTLHHINC + HHPARN19_BRD +
+                                  EDCPUB + RACEETH + CSEX + DSBLTY
+
+logistic_reduced <- high_achiever ~ school_involve_score + home_engage_score +
+                                     PARGRADEX + TTLHHINC +
+                                     HHPARN19_BRD + RACEETH + DSBLTY
+
+log_spec <- logistic_reg() %>%
+  set_engine("glm") %>%
+  set_mode("classification")
+
+log_mod_full    <- log_spec %>% fit(logistic_full,    data = train_model)
+log_mod_reduced <- log_spec %>% fit(logistic_reduced, data = train_model)
+
+cat("Logistic full AIC:   ", glance(log_mod_full)$AIC,    "\n")
+cat("Logistic reduced AIC:", glance(log_mod_reduced)$AIC, "\n")
+
+anova(extract_fit_engine(log_mod_reduced),
+      extract_fit_engine(log_mod_full),
+      test = "Chisq")
+
+# Odds ratios with confidence intervals
+tidy(log_mod_full, exponentiate = TRUE, conf.int = TRUE)
+```
+
+### 9.2 VIF Check for Multicollinearity
+
+```{r logistic-vif}
+# VIF check on the full logistic model
+vif(extract_fit_engine(log_mod_full))
+```
+
+**Multicollinearity assessment:** VIF values below 5 indicate no problematic multicollinearity. `PARGRADEX` and `TTLHHINC` are moderately correlated (higher-educated parents tend to have higher income), but VIF values confirm they each contribute independent information to the model. The composite scores (`school_involve_score`, `home_engage_score`) also show acceptable VIF values, validating our choice to summarize individual items into scores.
+
+### 9.3 Residual Diagnostics
+
+```{r logistic-residuals}
+# Deviance residuals for logistic regression
+log_aug_train <- augment(extract_fit_engine(log_mod_full),
+                         type.predict = "response",
+                         type.residuals = "deviance") %>%
+  mutate(id = row_number())
+
+# Residuals vs fitted
+ggplot(log_aug_train, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Logistic Regression: Deviance Residuals vs Fitted",
+       subtitle = "Two-band pattern is expected for binary outcomes",
+       x = "Fitted Values (predicted probability)", y = "Deviance Residuals")
+
+# Index plot
+ggplot(log_aug_train, aes(x = id, y = .resid)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_hline(yintercept = c(-2, 0, 2), color = c("orange", "red", "orange"),
+             linetype = c("dashed", "solid", "dashed")) +
+  labs(title = "Logistic Regression: Deviance Residuals vs Index",
+       subtitle = "Points beyond ±2 are noteworthy",
+       x = "Observation Index", y = "Deviance Residuals")
+```
+
+**Residual interpretation:** The two-band pattern in the residuals vs. fitted plot is characteristic and expected for binary outcomes — the data are truly 0s and 1s, so residuals naturally cluster into two arcs. The index plot shows several observations with |residuals| > 2, which is worth noting but not unusual for a dataset of this size with a class-imbalanced outcome.
+
+### 9.4 Test Set Evaluation
+
+```{r logistic-test}
+log_aug <- augment(log_mod_full, new_data = test_model)
+
+conf_mat(log_aug,  truth = high_achiever, estimate = .pred_class)
+accuracy(log_aug,  truth = high_achiever, estimate = .pred_class)
+precision(log_aug, truth = high_achiever, estimate = .pred_class, event_level = "second")
+recall(log_aug,    truth = high_achiever, estimate = .pred_class, event_level = "second")
+f_meas(log_aug,    truth = high_achiever, estimate = .pred_class, event_level = "second")
+
+log_aug %>%
+  roc_curve(truth = high_achiever, .pred_Yes, event_level = "second") %>%
+  autoplot() +
+  labs(title = "ROC Curve - Logistic Regression",
+       subtitle = "AUC computed with Yes (high achiever) as the event class")
+
+roc_auc(log_aug, truth = high_achiever, .pred_Yes, event_level = "second")
+```
+
+### 9.5 Cross-Validation
+
+```{r logistic-cv}
+set.seed(631)
+folds <- vfold_cv(train_model, v = 10, strata = high_achiever)
+
+log_wf <- workflow() %>%
+  add_model(log_spec) %>%
+  add_formula(logistic_full)
+
+log_cv <- log_wf %>%
+  fit_resamples(
+    resamples = folds,
+    metrics = metric_set(accuracy, roc_auc),
+    control   = control_resamples(save_pred = TRUE)
+  )
+
+collect_metrics(log_cv)
+log_cv %>%
+  collect_predictions() %>%
+  f_meas(truth = high_achiever, estimate = .pred_class, event_level = "second")
+```
+
+**Cross-validation rationale:** The train/test split evaluates final model performance but does not validate our model selection process. 10-fold CV on the training set confirms that the accuracy and AUC we observe are stable across different subsets of the data and are not artifacts of a particular train/test split.
+
+**Model selection:** The full model (AIC = 12,999) significantly outperforms the reduced model (AIC = 13,173) by a likelihood ratio test (p < 0.001). VIF values confirm no harmful multicollinearity.
+
+**Key findings from odds ratios** (event = "Yes" = high achiever; OR > 1 means higher odds of being a high achiever):
+
+- `DSBLTYNo_disability` OR = 2.89 — the strongest predictor. Children without a disability have nearly 3× higher odds of earning mostly A's compared to children with a disability.
+- `PARGRADEXGrad_school` OR = 2.55 — children of graduate-educated parents have 2.55× higher odds of being high achievers compared to children of parents without a high school diploma.
+- `CSEXFemale` OR = 1.73 — girls have 73% higher odds of being high achievers than boys.
+- `RACEETHBlack` OR = 0.549 — Black children have 45% lower odds of being high achievers compared to White children, even after controlling for income and parent education.
+- `TTLHHINC` OR = 1.05 — each income category increase is associated with slightly higher odds of being a high achiever.
+- `EDCPUBNot_public` OR = 1.23 — children in non-public schools have 23% higher odds of being high achievers than public school students.
+
+---
+
+## 10. Multinomial Regression
+
+**Research question:** What factors predict which of four grade categories (A's, B's, C's, D's or lower) a child falls into?
+
+**Why multinomial regression?** Unlike logistic regression which requires a binary outcome, multinomial logistic regression handles responses with more than two unordered categories. It fits $K-1 = 3$ equations simultaneously, each comparing one grade category to the baseline (Mostly A's). This preserves the full information in the grading outcome rather than collapsing it.
+
+**Addressing class imbalance with upsampling:** The original training data has approximately 6,051 A students but only 194 D students — a 31:1 ratio. A model trained on this data will learn to almost never predict D's. We use `step_upsample()` from `{themis}` to randomly duplicate rows from the minority classes until they reach 50% of the majority class size (`over_ratio = 0.5`). This is applied **only to training data** — the test set remains in its natural distribution to provide an honest evaluation.
+
+```{r multinomial}
+multi_spec <- multinom_reg() %>%
+  set_engine("nnet") %>%
+  set_mode("classification")
+
+multi_full    <- SEGRADES ~ school_involve_score + home_engage_score +
+                             PARGRADEX + TTLHHINC + HHPARN19_BRD +
+                             EDCPUB + RACEETH + CSEX + DSBLTY
+
+multi_reduced <- SEGRADES ~ school_involve_score + home_engage_score +
+                              PARGRADEX + TTLHHINC +
+                              HHPARN19_BRD + RACEETH
+
+# Upsampling recipe — applied to training data only
+multi_recipe <- recipe(SEGRADES ~ school_involve_score + home_engage_score +
+                         PARGRADEX + TTLHHINC + HHPARN19_BRD +
+                         EDCPUB + RACEETH + CSEX + DSBLTY,
+                       data = train_model) %>%
+  step_upsample(SEGRADES, over_ratio = 0.5, seed = 631)
+
+train_upsampled <- multi_recipe %>%
+  prep() %>%
+  bake(new_data = NULL)
+
+cat("Class distribution after upsampling:\n")
+train_upsampled %>% count(SEGRADES)
+
+# Fit candidate models
+multi_mod_full <- multi_spec %>%
+  fit(multi_full, data = train_upsampled)
+multi_mod_full <- repair_call(multi_mod_full, data = train_upsampled)
+
+multi_mod_reduced <- multi_spec %>%
+  fit(multi_reduced, data = train_upsampled)
+multi_mod_reduced <- repair_call(multi_mod_reduced, data = train_upsampled)
+
+cat("Multinomial full AIC:   ", AIC(extract_fit_engine(multi_mod_full)),    "\n")
+cat("Multinomial reduced AIC:", AIC(extract_fit_engine(multi_mod_reduced)), "\n")
+
+tidy(multi_mod_full) %>% print(n = Inf)
+
+# Test set evaluation
+multi_aug <- augment(multi_mod_full, new_data = test_model)
+
+conf_mat(multi_aug, truth = SEGRADES, estimate = .pred_class)
+
+multi_metrics <- metric_set(accuracy, precision, recall, f_meas)
+multi_metrics(multi_aug,
+              truth     = SEGRADES,
+              estimate  = .pred_class,
+              estimator = "macro")
+
+# Predicted vs actual bar chart
+multi_aug %>%
+  count(SEGRADES, .pred_class) %>%
+  ggplot(aes(x = SEGRADES, y = n, fill = .pred_class)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Multinomial: Predicted vs Actual Grade Category",
+       subtitle = "Upsampling allows the model to predict all four classes",
+       x = "Actual Grade", y = "Count", fill = "Predicted")
+```
+
+**`repair_call()` note:** This tidymodels utility fixes an internal issue where the multinomial model's stored call references `data = data` instead of the actual data object, which is required for `augment()` to work correctly.
+
+**Model selection:** Full model (AIC = 35,347) substantially outperforms reduced (AIC = 38,725), confirming that school type, sex, and disability add meaningful explanatory power for grade category.
+
+**Key coefficient patterns** (all relative to Mostly_As baseline; negative = less likely to be in that lower grade category):
+
+- `DSBLTYNo_disability` grows in magnitude from B's to C's to D's — the grade gap associated with disability widens dramatically at lower grade levels.
+- `CSEXFemale` is consistently negative — girls are less likely to be in any lower grade category compared to boys.
+- `EDCPUBNot_public` has a large negative effect for D's — students in non-public schools are much less likely to receive D's or below, possibly reflecting selection effects.
+
+---
+
+## 11. Linear and Quadratic Discriminant Analysis
+
+**Research question:** Can we classify children as high achievers using continuous numeric predictors?
+
+**Why LDA/QDA?** LDA and QDA are alternative classification methods grounded in a different theoretical framework than logistic regression. Rather than modeling $P(Y=k|X)$ directly, they model the distribution of $X$ within each class ($P(X|Y=k)$) and use Bayes' theorem to derive posterior probabilities. LDA assumes multivariate normality with equal covariance matrices across classes (producing linear decision boundaries); QDA relaxes the equal-covariance assumption (producing quadratic boundaries).
+
+**Predictor selection for LDA/QDA:** These methods require numeric predictors. We use five continuous variables:
+
+- `school_involve_score` (0-8): count of school activities — the primary predictor of interest
+- `home_engage_score` (0-7): count of home engagement activities — secondary predictor of interest
+- `FODINNERX` (0-7): days per week the family ate dinner together — a theoretically motivated proxy for family cohesion and structured time together
+- `TTLHHINC` (1-12): ordered income categories — socioeconomic control
+- `NUMSIBSX` (0-7): number of siblings — proxy for diluted parental attention and household resource competition
+
+We exclude the categorical predictors (race, parent education, disability, school type) because incorporating them into LDA/QDA requires additional assumptions. This intentionally simplifies the model and allows a direct comparison: logistic regression's ability to include categorical predictors explains most of its advantage over LDA/QDA.
+
+```{r lda-qda}
+lda_formula <- high_achiever ~ school_involve_score + home_engage_score +
+                                FODINNERX + TTLHHINC + NUMSIBSX
+
+train_lda <- train_model %>%
+  drop_na(school_involve_score, home_engage_score,
+          FODINNERX, TTLHHINC, NUMSIBSX)
+
+test_lda <- test_model %>%
+  drop_na(school_involve_score, home_engage_score,
+          FODINNERX, TTLHHINC, NUMSIBSX)
+
+# LDA
+lda_mod <- discrim_linear() %>%
+  set_engine("MASS") %>%
+  set_mode("classification") %>%
+  fit(lda_formula, data = train_lda)
+
+lda_mod  # group means and discriminant function
+
+lda_aug  <- augment(lda_mod, new_data = test_lda)
+lda_acc  <- accuracy(lda_aug,  truth = high_achiever, estimate = .pred_class)
+lda_prec <- precision(lda_aug, truth = high_achiever, estimate = .pred_class,
+                      event_level = "second")
+lda_rec  <- recall(lda_aug,    truth = high_achiever, estimate = .pred_class,
+                   event_level = "second")
+lda_f1   <- f_meas(lda_aug,    truth = high_achiever, estimate = .pred_class,
+                   event_level = "second")
+lda_auc  <- roc_auc(lda_aug,   truth = high_achiever, .pred_Yes,
+                    event_level = "second")
+
+cat("LDA Accuracy: ", lda_acc$.estimate,  "\n")
+cat("LDA Precision:", lda_prec$.estimate, "\n")
+cat("LDA Recall:   ", lda_rec$.estimate,  "\n")
+cat("LDA F1:       ", lda_f1$.estimate,   "\n")
+cat("LDA AUC:      ", lda_auc$.estimate,  "\n")
+
+lda_aug %>%
+  roc_curve(truth = high_achiever, .pred_Yes, event_level = "second") %>%
+  autoplot() +
+  labs(title = "ROC Curve - LDA")
+
+# QDA
+qda_mod <- discrim_quad() %>%
+  set_engine("MASS") %>%
+  set_mode("classification") %>%
+  fit(lda_formula, data = train_lda)
+
+qda_aug  <- augment(qda_mod, new_data = test_lda)
+qda_acc  <- accuracy(qda_aug,  truth = high_achiever, estimate = .pred_class)
+qda_prec <- precision(qda_aug, truth = high_achiever, estimate = .pred_class,
+                      event_level = "second")
+qda_rec  <- recall(qda_aug,    truth = high_achiever, estimate = .pred_class,
+                   event_level = "second")
+qda_f1   <- f_meas(qda_aug,    truth = high_achiever, estimate = .pred_class,
+                   event_level = "second")
+qda_auc  <- roc_auc(qda_aug,   truth = high_achiever, .pred_Yes,
+                    event_level = "second")
+
+cat("QDA Accuracy: ", qda_acc$.estimate,  "\n")
+cat("QDA Precision:", qda_prec$.estimate, "\n")
+cat("QDA Recall:   ", qda_rec$.estimate,  "\n")
+cat("QDA F1:       ", qda_f1$.estimate,   "\n")
+cat("QDA AUC:      ", qda_auc$.estimate,  "\n")
+
+qda_aug %>%
+  roc_curve(truth = high_achiever, .pred_Yes, event_level = "second") %>%
+  autoplot() +
+  labs(title = "ROC Curve - QDA")
+```
+
+**LDA vs QDA comparison:** LDA and QDA perform nearly identically (AUC ≈ 0.651 vs 0.650). The negligible difference suggests that the equal-covariance assumption underlying LDA is adequate here — QDA's additional flexibility in allowing class-specific covariance matrices does not improve predictions meaningfully given five predictors and a large sample.
+
+**Logistic vs LDA/QDA:** Logistic regression (AUC = 0.743) substantially outperforms both discriminant methods. This difference is expected and attributable primarily to the categorical predictors available to logistic regression (particularly disability status, race, and parent education) that LDA/QDA cannot access in this formulation, not a failure of the discriminant approach itself.
+
+---
+
+## 12. Model Selection Summary and Final Comparison
+
+```{r summary}
+cat("=== POISSON vs NEGATIVE BINOMIAL (Response: FSFREQ) ===\n")
+cat("Poisson AIC:              ", AIC(pois_mod),       "\n")
+cat("NB full AIC:              ", AIC(nb_mod),         "\n")
+cat("AIC improvement:          ", round(AIC(pois_mod) - AIC(nb_mod), 0), "\n")
+cat("Dispersion ratio (Poisson):", 
+    round(pois_mod$deviance / pois_mod$df.residual, 2), "\n")
+cat("Theta (NB dispersion):    ", round(nb_mod$theta, 4), "\n")
+cat("NB Test RMSE:             ", round(nb_rmse, 3),   "\n\n")
+
+cat("=== LOGISTIC REGRESSION (Response: high_achiever) ===\n")
+cat("Full AIC:", glance(log_mod_full)$AIC, "\n")
+log_metrics <- tibble(
+  Metric    = c("Accuracy", "Precision", "Recall", "F1", "AUC"),
+  Logistic  = c(
+    accuracy( log_aug, truth = high_achiever, estimate = .pred_class)$.estimate,
+    precision(log_aug, truth = high_achiever, estimate = .pred_class,
+              event_level = "second")$.estimate,
+    recall(   log_aug, truth = high_achiever, estimate = .pred_class,
+              event_level = "second")$.estimate,
+    f_meas(   log_aug, truth = high_achiever, estimate = .pred_class,
+              event_level = "second")$.estimate,
+    roc_auc(  log_aug, truth = high_achiever, .pred_Yes,
+              event_level = "second")$.estimate
+  ),
+  LDA = c(lda_acc$.estimate, lda_prec$.estimate, lda_rec$.estimate,
+          lda_f1$.estimate,  lda_auc$.estimate),
+  QDA = c(qda_acc$.estimate, qda_prec$.estimate, qda_rec$.estimate,
+          qda_f1$.estimate,  qda_auc$.estimate)
+) %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+print(log_metrics)
+
+cat("\n=== MULTINOMIAL REGRESSION (Response: SEGRADES) ===\n")
+cat("Full AIC:", AIC(extract_fit_engine(multi_mod_full)), "\n")
+multi_metrics(multi_aug,
+              truth     = SEGRADES,
+              estimate  = .pred_class,
+              estimator = "macro")
+```
+
+**Overall conclusions:**
+
+The **Negative Binomial model** is the clear winner for the count outcome, with an AIC improvement of ~35,000 points over standard Poisson and adequate residual behavior. The Poisson model is an important baseline that is explicitly compared and rejected due to overdispersion — this comparison itself is a demonstration of the Poisson technique as required.
+
+The **Logistic regression model** is the best classifier for the binary high-achiever outcome (AUC ≈ 0.743, F1 ≈ 0.740), outperforming LDA and QDA. 10-fold cross-validation confirms stable performance. VIF analysis confirms no multicollinearity concerns.
+
+The **Multinomial regression model** benefits substantially from upsampling, enabling predictions across all four grade categories. While macro F1 appears modest, this reflects the genuine difficulty of the 4-class problem and rarity of D-level students.
+
+**LDA and QDA** perform comparably to each other, confirming that the linear decision boundary assumption is adequate. Their lower performance relative to logistic regression is attributable to their restriction to continuous predictors — a principled methodological limitation, not a model failure.
+```

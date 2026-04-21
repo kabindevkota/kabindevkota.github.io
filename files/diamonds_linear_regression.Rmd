@@ -1,0 +1,462 @@
+---
+title: "Can Carat Weight Be Determined from Visual Characteristics?"
+subtitle: "STA 631 - Linear Regression Project"
+author: "Kabin Devkota, Nishan Khanal, Shreya KC, Udita Bista"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+---
+
+# Summary of Insights
+
+The goal of this project is to determine whether the carat weight of a diamond can be estimated using only visually observable characteristics — without physically weighing it. Using the `diamonds` dataset (53,940 observations), we explored all available predictors except `price`, which is not visually observable.
+
+Key findings from our analysis:
+
+- The physical dimensions of a diamond — specifically its length (`x`) and depth (`z`) — are the strongest predictors of carat weight, along with the table percentage (`table`).
+- Quality grades (`cut`, `color`, `clarity`), while visually observable, did not improve model performance once physical dimensions were included. This makes intuitive sense: carat weight is a function of physical size and density, not of how a diamond is graded.
+- The relationship between carat and the physical dimensions is non-linear. A polynomial model using `table`, `poly(x, 2)`, and `poly(z, 2)` achieved an R² of 0.998 and a test RMSE of 0.026 carats with only 5 predictors — a highly parsimonious and accurate result.
+
+---
+
+# Modeling Process Summary
+
+## Libraries and Setup
+
+```{r libraries}
+library(tidyverse)
+library(tidymodels)
+library(GGally)
+library(ggformula)
+library(car)
+library(broom)
+library(gghighlight)
+library(leaps)
+```
+
+---
+
+## 1. Data Preparation
+
+The `diamonds` dataset contains 10 variables. We excluded `price` as it is not visually observable. The ordered factors `cut`, `color`, and `clarity` were re-leveled so that the reference category in each case represents the lowest quality grade (Fair, D, and I1 respectively), making coefficient interpretation more natural.
+
+**Data quality check:** We found 8, 7, and 20 zeros in `x`, `y`, and `z` respectively. A diamond cannot have zero physical dimensions — these are data entry errors. We removed these rows before proceeding.
+
+**Train / Validation / Test split:** To avoid using test data during model selection, we used a three-way split:
+- **Training (64%)**: fit all candidate models
+- **Validation (16%)**: select the best model size objectively
+- **Test (20%)**: final evaluation only, never seen during modeling
+
+```{r data-prep}
+data(diamonds)
+
+# Set reference levels: lowest quality as baseline for each factor
+diamonds <- diamonds %>%
+  mutate(
+    cut     = factor(cut,     levels = c("Fair","Good","Very Good","Premium","Ideal")),
+    color   = factor(color,   levels = c("D","E","F","G","H","I","J")),
+    clarity = factor(clarity, levels = c("I1","SI2","SI1","VS2","VS1","VVS2","VVS1","IF"))
+  )
+
+# Check for impossible zero values in physical dimensions
+diamonds %>%
+  summarise(
+    x_zeros = sum(x == 0),
+    y_zeros = sum(y == 0),
+    z_zeros = sum(z == 0)
+  )
+
+# Check for missing values
+diamonds %>%
+  summarise(across(everything(), ~ sum(is.na(.))))
+
+# Remove rows with zero dimensions — these are data entry errors
+diamonds <- diamonds %>% filter(x > 0, y > 0, z > 0)
+
+# Three-way split: 64% train / 16% validation / 20% test
+set.seed(631)
+diamonds_split      <- initial_split(diamonds, prop = 0.80, strata = carat)
+diamonds_train_full <- training(diamonds_split)
+diamonds_test       <- testing(diamonds_split)
+
+diamonds_split2 <- initial_split(diamonds_train_full, prop = 0.80, strata = carat)
+diamonds_train  <- training(diamonds_split2)
+diamonds_val    <- testing(diamonds_split2)
+
+cat("Training rows:   ", nrow(diamonds_train), "\n")
+cat("Validation rows: ", nrow(diamonds_val),   "\n")
+cat("Test rows:       ", nrow(diamonds_test),  "\n")
+```
+
+---
+
+## 2. Exploratory Data Analysis
+
+### 2.1 Response Variable: Carat
+
+The distribution of carat weight is right-skewed with a mean of 0.80 and median of 0.70, indicating that most diamonds are under 1 carat with a long tail of larger stones. We considered a log transformation but proceeded with the untransformed response since the final model performed well without it.
+
+```{r univariate}
+diamonds_train %>%
+  summarise(
+    n      = n(),
+    mean   = round(mean(carat), 3),
+    median = round(median(carat), 3),
+    sd     = round(sd(carat), 3),
+    min    = min(carat),
+    max    = max(carat)
+  )
+
+diamonds_train %>%
+  ggplot(aes(x = carat)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of Carat Weight",
+       subtitle = "Right-skewed with most diamonds under 1 carat",
+       x = "Carat", y = "Count")
+```
+
+### 2.2 Correlations with Carat
+
+Before fitting any models, we examined which variables are most correlated with carat. This helps motivate variable selection decisions later.
+
+```{r correlations}
+# Add squared terms before computing correlations
+diamonds_train <- diamonds_train %>%
+  mutate(x2 = x^2, y2 = y^2, z2 = z^2)
+diamonds_val <- diamonds_val %>%
+  mutate(x2 = x^2, y2 = y^2, z2 = z^2)
+diamonds_test <- diamonds_test %>%
+  mutate(x2 = x^2, y2 = y^2, z2 = z^2)
+
+# Correlation of numeric variables with carat
+diamonds_train %>%
+  select(carat, depth, table, x, y, z, x2, y2, z2) %>%
+  cor(use = "complete.obs") %>%
+  as_tibble(rownames = "variable") %>%
+  select(variable, carat) %>%
+  filter(variable != "carat") %>%
+  arrange(desc(abs(carat))) %>%
+  ggplot(aes(x = reorder(variable, abs(carat)), y = carat)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Correlation of Predictors with Carat",
+       subtitle = "Squared dimension terms show strongest linear correlation",
+       x = "Variable", y = "Correlation with Carat")
+```
+
+The squared dimension terms (`x2`, `y2`, `z2`) show the strongest correlations with carat, suggesting a non-linear relationship between physical size and weight. This motivates including polynomial terms in our model.
+
+### 2.3 Non-linearity of Physical Dimensions
+
+To confirm the non-linear relationship, we plot carat against `x` directly.
+
+```{r nonlinear-check}
+diamonds_train %>%
+  ggplot(aes(x = x, y = carat)) +
+  geom_point(alpha = 0.1, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red",
+              linetype = "dashed", se = FALSE) +
+  geom_smooth(method = "loess", color = "darkgreen",
+              se = FALSE) +
+  labs(title = "Carat vs x (length in mm)",
+       subtitle = "Red = linear fit, Green = LOESS smooth — clear non-linearity",
+       x = "x (length in mm)", y = "Carat")
+```
+
+The LOESS curve clearly deviates from the linear fit, confirming that a polynomial term for `x` is warranted.
+
+### 2.4 Pairwise Relationships
+
+```{r pairs-quant, fig.width=9, fig.height=7}
+diamonds_train %>%
+  select(carat, depth, table, x, y, z) %>%
+  ggpairs(title = "Pairwise Relationships — Quantitative Variables")
+```
+
+`x`, `y`, and `z` are highly correlated with each other (all measuring physical size), which signals potential collinearity. We will address this during model selection and assessment.
+
+### 2.5 Carat vs Qualitative Variables
+
+```{r qual-plots, fig.width=9, fig.height=3}
+p1 <- diamonds_train %>%
+  ggplot(aes(x = cut, y = carat)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Carat by Cut", x = "Cut", y = "Carat")
+
+p2 <- diamonds_train %>%
+  ggplot(aes(x = color, y = carat)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Carat by Color", x = "Color", y = "Carat")
+
+p3 <- diamonds_train %>%
+  ggplot(aes(x = clarity, y = carat)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Carat by Clarity", x = "Clarity", y = "Carat")
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+Interestingly, higher quality cuts and clarities are associated with *lower* median carat weights. This is a known feature of the diamonds market — larger diamonds are harder to cut perfectly, so high-quality grades tend to appear on smaller stones.
+
+### 2.6 Interaction Check
+
+We checked whether the relationship between `x` and carat differs across levels of each categorical variable. Parallel slopes indicate no interaction is needed.
+
+```{r interaction-check, fig.width=9, fig.height=3}
+p1 <- diamonds_train %>%
+  ggplot(aes(x = x, y = carat, color = cut)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "By Cut", x = "x (mm)", y = "Carat")
+
+p2 <- diamonds_train %>%
+  ggplot(aes(x = x, y = carat, color = color)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "By Color", x = "x (mm)", y = "Carat")
+
+p3 <- diamonds_train %>%
+  ggplot(aes(x = x, y = carat, color = clarity)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "By Clarity", x = "x (mm)", y = "Carat")
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+All three plots show nearly parallel slopes across all levels of each categorical variable. The relationship between physical size and carat weight is consistent regardless of cut, color, or clarity grade. **No interaction terms are needed.**
+
+---
+
+## 3. Model Specification
+
+```{r lm-spec}
+lm_spec <- linear_reg() %>%
+  set_mode("regression") %>%
+  set_engine("lm")
+```
+
+---
+
+## 4. Best Subset Selection
+
+### 4.1 Candidate Variables
+
+We included all visually observable predictors plus squared terms for the physical dimensions (`x2`, `y2`, `z2`) to allow the model to capture non-linear relationships. `price` was excluded as it is not visually observable. This gives us 25 candidate predictors (including dummy variable expansions of the factors).
+
+```{r best-subset}
+regfit_full <- regsubsets(
+  carat ~ cut + color + clarity + depth + table + x + y + z + x2 + y2 + z2,
+  data   = diamonds_train,
+  nvmax  = 25,
+  method = "exhaustive"
+)
+
+reg_summary <- summary(regfit_full)
+```
+
+### 4.2 Model Selection Criteria
+
+We examined four standard criteria to guide model size selection.
+
+```{r subset-criteria, fig.width=8, fig.height=6}
+par(mfrow = c(2, 2))
+plot(reg_summary$rss,   xlab = "Number of Variables", ylab = "RSS",         type = "l")
+plot(reg_summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted R²", type = "l")
+points(which.max(reg_summary$adjr2),
+       reg_summary$adjr2[which.max(reg_summary$adjr2)],
+       col = "red", cex = 2, pch = 20)
+plot(reg_summary$cp,    xlab = "Number of Variables", ylab = "Cp",          type = "l")
+points(which.min(reg_summary$cp),
+       reg_summary$cp[which.min(reg_summary$cp)],
+       col = "red", cex = 2, pch = 20)
+plot(reg_summary$bic,   xlab = "Number of Variables", ylab = "BIC",         type = "l")
+points(which.min(reg_summary$bic),
+       reg_summary$bic[which.min(reg_summary$bic)],
+       col = "red", cex = 2, pch = 20)
+par(mfrow = c(1, 1))
+```
+
+BIC (which penalizes complexity most heavily) suggests approximately 13 variables. Adjusted R² plateaus quickly after ~8 variables, suggesting additional predictors add diminishing returns. We use the validation set to make the final objective decision.
+
+### 4.3 Validation Set — Choosing Best Model Size
+
+Rather than relying solely on training-set criteria, we used the held-out validation set to compute prediction error for the best model of each size. This gives an unbiased estimate of test performance and is the most objective basis for model selection.
+
+```{r validation-set}
+val_matrix <- model.matrix(
+  carat ~ cut + color + clarity + depth + table + x + y + z + x2 + y2 + z2,
+  data = diamonds_val
+)
+
+n_models   <- length(reg_summary$rss)
+val_errors <- rep(NA, n_models)
+
+for (i in 1:n_models) {
+  coef_i       <- coef(regfit_full, id = i)
+  pred_i       <- val_matrix[, names(coef_i)] %*% coef_i
+  val_errors[i] <- mean((diamonds_val$carat - pred_i)^2)
+}
+
+best_size <- which.min(val_errors)
+
+tibble(n_vars = 1:n_models, val_mse = val_errors) %>%
+  ggplot(aes(x = n_vars, y = val_mse)) +
+  geom_line() +
+  geom_point() +
+  geom_point(aes(x = best_size, y = val_errors[best_size]),
+             col = "red", size = 4) +
+  annotate("text",
+           x = best_size + 1.5,
+           y = val_errors[best_size],
+           label = paste0("Best size = ", best_size),
+           color = "red", hjust = 0) +
+  labs(title = "Validation MSE by Number of Predictors",
+       subtitle = "Red point = model size with lowest validation error",
+       x = "Number of Predictors", y = "Validation MSE")
+
+cat("Best model size (validation):", best_size, "\n")
+cat("Selected predictors:\n")
+print(coef(regfit_full, id = best_size))
+```
+
+The validation set selected a **5-predictor model**: `table`, `x`, `z`, `x2`, `z2`. Notably, all quality grade variables (`cut`, `color`, `clarity`) were excluded — the physical dimensions alone are sufficient to predict carat weight accurately.
+
+### 4.4 Refit Final Model on Full Training Data
+
+The selected predictors (`x`, `z`, `x2`, `z2`) include raw polynomial terms which are inherently collinear. We use `poly(x, 2)` and `poly(z, 2)` instead — orthogonal polynomials that capture the same non-linear relationship while eliminating collinearity between the linear and squared terms.
+
+```{r final-model}
+final_model <- lm_spec %>%
+  fit(carat ~ table + poly(x, 2) + poly(z, 2),
+      data = diamonds_train)
+
+tidy(final_model)
+glance(final_model)
+```
+
+---
+
+## 5. Model Diagnostics
+
+### 5.1 VIF — Collinearity Check
+
+```{r vif}
+lm_engine <- extract_fit_engine(final_model)
+vif(lm_engine)
+```
+
+Using `poly()` instead of raw squared terms dramatically reduces collinearity. All GVIF values are now reasonable, confirming that the orthogonal polynomial encoding resolved the collinearity issue.
+
+```{r diag-setup}
+diag_df <- broom::augment(lm_engine)
+```
+
+### 5.2 Residuals vs Fitted
+
+```{r resid-fitted}
+diag_df %>%
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_hline(yintercept = 0, color = "red") +
+  geom_smooth(method = "loess", se = FALSE, color = "darkgreen") +
+  labs(title = "Residuals vs Fitted",
+       subtitle = "Checking linearity and constant variance",
+       x = "Fitted Values", y = "Residuals")
+```
+
+### 5.3 Normal Q-Q Plot
+
+```{r qq-plot}
+diag_df %>%
+  ggplot(aes(sample = .std.resid)) +
+  stat_qq(alpha = 0.2, color = "steelblue") +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q Plot",
+       subtitle = "Checking normality of residuals")
+```
+
+### 5.4 Scale-Location Plot
+
+```{r scale-location}
+diag_df %>%
+  ggplot(aes(x = .fitted, y = sqrt(abs(.std.resid)))) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_smooth(method = "loess", se = FALSE, color = "darkgreen") +
+  labs(title = "Scale-Location Plot",
+       subtitle = "Checking constant variance",
+       x = "Fitted Values",
+       y = "sqrt(|Standardized Residuals|)")
+```
+
+### 5.5 Outliers
+
+```{r outliers}
+diag_df %>%
+  mutate(idx = row_number()) %>%
+  ggplot(aes(x = idx, y = .std.resid)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  gghighlight(.std.resid > 3 | .std.resid < -3,
+              unhighlighted_params = list(alpha = 0.1)) +
+  geom_hline(yintercept = c(-3, 3),
+             linetype = "dashed", color = "red") +
+  labs(title = "Studentized Residuals",
+       subtitle = "Points outside ±3 highlighted as potential outliers",
+       x = "Index", y = "Standardized Residuals")
+```
+
+### 5.6 Leverage
+
+```{r leverage}
+diag_df %>%
+  ggplot(aes(x = .hat, y = .std.resid)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_hline(yintercept = c(-2, 2),
+             linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Leverage",
+       subtitle = "Checking for high-influence observations",
+       x = "Leverage", y = "Standardized Residuals")
+```
+
+---
+
+## 6. Test Set Evaluation
+
+The test set was held out completely during all modeling decisions. We now evaluate the final model on it for the first and only time.
+
+```{r test-eval}
+my_metrics <- metric_set(rmse, rsq, mae)
+
+test_pred <- augment(final_model, new_data = diamonds_test)
+my_metrics(test_pred, truth = carat, estimate = .pred)
+
+test_pred %>%
+  ggplot(aes(x = carat, y = .pred)) +
+  geom_point(alpha = 0.2, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Predicted vs Actual Carat (Test Set)",
+       subtitle = "Points close to the red line indicate accurate predictions",
+       x = "Actual Carat", y = "Predicted Carat")
+```
+
+The model achieves an R² of **0.997** and RMSE of **0.026 carats** on the held-out test set, confirming that the model generalizes well to unseen data.
+
+---
+
+## 7. Final Model Summary
+
+```{r final-summary}
+tidy(final_model, conf.int = TRUE)
+glance(final_model)
+```
+
+The final model is:
+
+$$\widehat{carat} = 0.615 + 0.00319 \times table + f(x) + g(z)$$
+
+where $f(x)$ and $g(z)$ are second-degree orthogonal polynomial functions of the length and depth dimensions respectively. All coefficients are highly significant (p < 0.001). The model uses only 5 predictors yet explains **99.8%** of the variance in carat weight, demonstrating that carat can be determined almost perfectly from visually observable physical characteristics alone.
+```

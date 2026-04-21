@@ -1,0 +1,295 @@
+---
+title: "Homework 1 - Simple Linear Regression"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Libraries and setup
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(ggformula)
+library(ISLR)
+library(MASS)
+
+set.seed(1998)
+```
+
+---
+
+## Question 1. Simple Linear Regression with the Auto dataset
+
+We analyze the relationship between miles per gallon (`mpg`) and horsepower (`horsepower`) using a simple linear regression model.
+
+a) Perform a simple linear regression with mpg as the response and horsepower as the predictor. Comment on the output.
+
+i. Is there a relationship between the predictor and the response?
+
+ii. How strong is the relationship between the predictor and the response?
+
+iii. Is the relationship between the predictor and the response positive or negative?
+
+iv. What is the predicted mpg associated with a horsepower of 98? What are the associated 95 % confdence and prediction intervals?
+
+
+(b) Plot the response and the predictor. Use the abline() function to display the least squares regression line.
+
+
+(c) Use the plot() function to produce diagnostic plots of the least squares regression ft. Comment on any problems you see with the ft.
+
+
+### (a) Fit the model
+
+```{r}
+# incase of missing values, remove them
+Auto_clean <- Auto |>
+  drop_na(mpg, horsepower)
+
+# Linear regression specification
+lm_spec <- linear_reg() |> 
+  set_mode("regression") |>
+  set_engine("lm")
+
+# Fit the simple linear regression model
+auto_fit <- lm_spec |>
+  fit(mpg ~ horsepower, data = Auto_clean)
+
+tidy(auto_fit)
+```
+
+The fitted model has the form
+
+$$
+\widehat{mpg} = \beta_0 + \beta_1 \cdot horsepower
+$$
+$$
+\widehat{mpg} = 39.94 - 0.16 \cdot horsepower
+$$
+
+```{r}
+glance(auto_fit)
+```
+
+
+#### Interpretation
+
+- The p-value for `horsepower` is extremely small, so there is strong evidence of a relationship between horsepower and mpg.
+- The estimated slope is negative, which means that as horsepower increases, mpg tends to decrease.
+- The R-squared value shows that horsepower explains a meaningful portion of the variability in mpg, but not all of it, which is reasonable since fuel efficiency depends on more than just horsepower.
+
+---
+
+### (b) Prediction at horsepower = 98
+
+```{r}
+new_obs <- tibble(horsepower = 98)
+
+cbind(
+predict(auto_fit, new_data = new_obs),# prediction for the mean response
+predict(auto_fit, new_data = new_obs, type = "conf_int"),# 95% confidence interval for the mean response
+predict(auto_fit, new_data = new_obs, type = "pred_int"))# 95% prediction interval for an individual car
+```
+
+#### Interpretation
+
+- The confidence interval gives a range for the *average* mpg of cars with horsepower 98.
+- The prediction interval is wider because it reflects the uncertainty for a single individual car.
+
+---
+
+### (c) Scatterplot with regression line
+
+```{r}
+auto_fit |>
+  augment(new_data = Auto_clean) |>
+  ggplot(aes(x = horsepower, y = mpg)) +
+  geom_point(alpha = 0.7) +
+  geom_line(aes(y = .pred), color = "red") +
+  labs(x = "Horsepower", y = "Miles per Gallon (mpg)")
+```
+
+
+The downward trend in the plot is consistent with the negative slope estimated by the model.
+
+---
+
+### (d) Diagnostic plots
+
+```{r}
+par(mfrow = c(2, 2))
+auto_fit |> 
+  extract_fit_engine() |> 
+  plot()
+par(mfrow = c(1, 1))
+```
+
+#### Comments
+
+- The residuals vs fitted plot suggests some curvature, indicating the relationship may not be perfectly linear.
+- The Q-Q plot shows mild departures from normality in the tails.
+- There are a few points with higher leverage, but none appear extreme enough to dominate the fit.
+
+Overall, the linear model captures the main trend, but it is clearly a simplification.
+
+---
+
+## Question 2. Linear vs Cubic Regression (Conceptual)
+
+We compare:
+
+- a linear model: $Y = \beta_0 + \beta_1 X + \epsilon$
+- a cubic model: $Y = \beta_0 + \beta_1 X + \beta_2 X^2 + \beta_3 X^3 + \epsilon$
+
+**(a) Which model is more flexible? Why?**
+
+The cubic model is more flexible because it can represent curved relationships, while the linear model is restricted to a straight line.
+
+**(b) Suppose that the true relationship between X and Y is linear, i.e. $Y = \beta_0 + \beta_1X + \epsilon$.**
+
+**(i) Based on model flexibility, which model would you expect to have a lower training RSS? Why?**
+
+The cubic model is expected to have a lower (or equal) training RSS because its extra flexibility allows it to fit the training data more closely.
+
+**(ii) Based on model flexibility, which model would you expect to have a lower test RSS? Why?**
+
+The linear model is expected to have a lower test RSS because it matches the true underlying relationship and avoids overfitting noise.
+
+---
+
+## Question 3. Simple Linear Regression with the Boston dataset (TidyModels)
+Include a full analysis similar to what we did for the Human Freedom Index data in class. Key components should include the following (but not limited to):
+
+a) Fit a simple linear regression model with `medv` as your response and
+`lstat` as your predictor.
+
+b) Perform a train/test split to assess predictive performance.
+
+c) Report regression output (using `TidyModels`) and construct confidence intervals for model coefficients and interpret
+
+d) Provide a short discussion of whether the predictor provides a reasonable model for `medv`. Include model diagnostics etc.
+
+We model median home value (`medv`) as a function of the percentage of lower-status population (`lstat`), following the same workflow used in the class SLR notebook.
+
+### (a) Model specification and fit
+
+```{r}
+# Prepare data
+boston_df <- Boston |>
+  dplyr::select(medv, lstat)
+
+# Linear regression specification
+lm_spec <- linear_reg() |>
+  set_engine("lm")
+
+# Fit on full data
+boston_fit <- lm_spec |>
+  fit(medv ~ lstat, data = boston_df)
+```
+
+```{r}
+# Model summary using broom helpers
+tidy(boston_fit)
+glance(boston_fit)
+```
+
+The fitted model is
+
+$$
+\widehat{medv} = \beta_0 + \beta_1 \cdot lstat
+$$
+$$
+\widehat{medv} = 34.55 - 0.95 \cdot lstat
+$$
+---
+
+### (b) Train / test split and evaluation
+
+```{r}
+# Split the data
+boston_split <- initial_split(boston_df, prop = 0.80)
+boston_train <- training(boston_split)
+boston_test  <- testing(boston_split)
+
+# Fit on training data
+boston_fit_train <- lm_spec |>
+  fit(medv ~ lstat, data = boston_train)
+
+# Predictions using augment (same approach as class)
+train_aug <- augment(boston_fit_train, new_data = boston_train)
+test_aug  <- augment(boston_fit_train, new_data = boston_test)
+
+# Performance metrics
+train_aug |>
+  metrics(truth = medv, estimate = .pred)
+test_aug  |>
+  metrics(truth = medv, estimate = .pred)
+```
+
+#### Interpretation
+
+- The training metrics show that `lstat` explains a substantial amount of variation in `medv`.
+- Test performance is slightly worse than training performance, which is expected and indicates reasonable generalization.
+
+---
+
+### (c) Confidence intervals for coefficients
+
+```{r}
+# Model fit on full data
+tidy(boston_fit, conf.int = TRUE)
+```
+
+```{r}
+# Model fit on training data
+tidy(boston_fit_train, conf.int = TRUE)
+```
+
+#### Interpretation
+
+- The slope confidence interval does not include 0, indicating a clear negative association between `lstat` and `medv`.
+- Practically, higher values of `lstat` are associated with lower median home values.
+
+---
+
+### (d) Visualization and diagnostics
+
+```{r}
+# Scatterplot with fitted line
+ggplot(train_aug, aes(x = lstat, y = medv)) +
+  geom_point(alpha = 0.7) +
+  geom_line(aes(y = .pred), color = "blue") +
+  labs(x = "lstat", y = "medv")
+```
+
+```{r}
+# Residual analysis
+train_aug <- train_aug |>
+  mutate(residual = medv - .pred)
+
+ggplot(train_aug, aes(x = .pred, y = residual)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = 0)
+```
+```{r}
+ggplot(train_aug, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25) +
+  xlab("Residuals")
+```
+
+```{r}
+ggplot(train_aug, aes(sample = residual)) +
+  stat_qq() +
+  stat_qq_line()
+```
+
+#### Discussion
+
+- `lstat` is a reasonable single predictor for `medv` and captures a strong overall trend.
+- Residual plots suggest some curvature and changing variance, so a simple linear model does not fully capture the structure in the data.
+- This model works well as a first pass, but a more flexible model could likely improve the fit.
