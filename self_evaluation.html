@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Evaluation Letter — Kabin Devkota</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:   #f5f0e8;
+    --cream2:  #ede8dc;
+    --cream3:  #e4ddd0;
+    --sand:    #c9bfa8;
+    --slate:   #6b7280;
+    --slate2:  #4a5568;
+    --ink:     #1a1f2e;
+    --rust:    #8b4513;
+    --rust2:   #a0522d;
+    --teal:    #2d6a6a;
+    --gold:    #b8860b;
+    --border:  #d4cbbf;
+    --card:    #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(245,240,232,0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.9rem 2.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 1rem;
+    color: var(--rust); text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--slate);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--rust); }
+
+  /* ── PAGE LAYOUT ── */
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 7rem 2rem 5rem;
+  }
+
+  /* ── HEADER AREA ── */
+  .page-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--teal);
+    display: flex; align-items: center; gap: 0.7rem;
+    margin-bottom: 0.6rem;
+  }
+  .page-kicker::before {
+    content: ''; width: 1.2rem; height: 1px;
+    background: var(--teal); display: block;
+  }
+  .page-heading {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -0.02em; color: var(--ink);
+    line-height: 1.1; margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    font-style: italic; color: var(--slate);
+    font-size: 1rem; margin-bottom: 3rem;
+  }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .download-bar-left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: 0.08em;
+    color: var(--slate);
+  }
+  .download-bar-left strong {
+    color: var(--ink); display: block;
+    font-size: 0.78rem; margin-bottom: 0.2rem;
+  }
+  .btn-download {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.1rem; border-radius: 5px;
+    background: var(--rust); color: white;
+    text-decoration: none; white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .btn-download:hover { background: var(--rust2); }
+
+  /* ── LETTER CARD ── */
+  .letter-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3.5rem 4rem;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    position: relative;
+  }
+
+  /* Decorative left rule */
+  .letter-card::before {
+    content: '';
+    position: absolute;
+    top: 3.5rem; bottom: 3.5rem; left: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--rust), transparent);
+    border-radius: 0 0 0 10px;
+  }
+
+  @media (max-width: 600px) {
+    .letter-card { padding: 2rem 1.5rem; }
+  }
+
+  /* ── LETTER TYPOGRAPHY ── */
+  .letter-sender {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.06em;
+    color: var(--slate); line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .letter-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--slate);
+    margin-bottom: 2rem;
+  }
+
+  .letter-recipient {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.04em;
+    color: var(--slate2); line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .letter-salutation {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1rem; color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Section headings inside the letter */
+  .letter-section-head {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600; font-size: 1.1rem;
+    color: var(--rust); margin: 2rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .letter-p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.97rem; color: var(--slate2);
+    line-height: 1.85; margin-bottom: 1.1rem;
+  }
+  .letter-p:last-of-type { margin-bottom: 0; }
+  .letter-p em { color: var(--ink); font-style: italic; }
+  .letter-p strong { color: var(--ink); font-weight: 600; }
+
+  .letter-closing {
+    margin-top: 2.5rem;
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.97rem; color: var(--slate2);
+    line-height: 1.8;
+  }
+
+  .letter-sig {
+    margin-top: 1.75rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic; font-size: 1.4rem;
+    color: var(--ink); margin-bottom: 0.4rem;
+  }
+
+  .letter-sig-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--slate);
+    line-height: 1.7;
+  }
+
+  /* ── CALLOUT ── */
+  .letter-callout {
+    background: rgba(45,106,106,0.05);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1.1rem;
+    margin: 1.25rem 0;
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.92rem; font-style: italic;
+    color: var(--slate2); line-height: 1.7;
+  }
+
+  /* ── DIVIDER ── */
+  .letter-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    max-width: 780px; margin: 0 auto;
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 1rem;
+  }
+  .ft-l { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: var(--slate); }
+  .ft-r { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; color: var(--sand); }
+  .ft-r a { color: var(--teal); text-decoration: none; }
+
+  /* ── FADE IN ── */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.shown { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="./sta631_portfolio.html" class="nav-logo">STA 631 Portfolio</a>
+  <ul class="nav-links">
+    <li><a href="./sta631_portfolio.html#objectives">Objectives</a></li>
+    <li><a href="./sta631_portfolio.html#models">Show &amp; Tell</a></li>
+    <li><a href="./sta631_portfolio.html#files">Files</a></li>
+    <li><a href="./sta631_portfolio.html#participation">Participation</a></li>
+    <li><a href="./index.html">← Portfolio</a></li>
+  </ul>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+
+  <div class="page-kicker reveal">STA 631 · Final Portfolio</div>
+  <h1 class="page-heading reveal">Self-Evaluation<br><em style="color:var(--rust);font-weight:400">Letter</em></h1>
+  <p class="page-sub reveal">A response to my Letter of Commitment to Myself, written January 23, 2026.</p>
+
+  <!-- Download bar -->
+  <div class="download-bar reveal">
+    <div class="download-bar-left">
+      <strong>self_evaluation_letter.docx</strong>
+      Cover letter format · ~900 words · April 26, 2026
+    </div>
+    <a href="./files/self_evaluation_letter.docx" class="btn-download">↓ Download .docx</a>
+  </div>
+
+  <!-- The letter -->
+  <div class="letter-card reveal">
+
+    <!-- Sender block -->
+    <div class="letter-sender">
+      Kabin Devkota<br>
+      Grand Valley State University — MS Data Science and Analytics
+    </div>
+
+    <div class="letter-date">April 26, 2026</div>
+
+    <div class="letter-recipient">
+      Dr. John Appiah-Kubi<br>
+      Department of Statistics<br>
+      Grand Valley State University<br>
+      Allendale, MI 49401
+    </div>
+
+    <div class="letter-salutation">Dear Dr. Appiah-Kubi,</div>
+
+    <!-- Opening -->
+    <p class="letter-p">
+      When I wrote my Letter of Commitment in January, I described three goals: becoming better at explaining statistical results, developing a genuine understanding of the statistics behind the models I had been using, and learning to collaborate effectively with randomly assigned teammates. Reading that letter now, I am struck by how accurately I predicted what would be hard. All three goals remained challenging throughout the semester, and all three saw real growth — though not always in the ways I expected.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Goal 1 -->
+    <div class="letter-section-head">Goal 1 — Explaining Statistical Results</div>
+
+    <p class="letter-p">
+      This was the goal I felt least confident about entering the semester and the one where I see the clearest improvement. In January, I could run a model and interpret the output for myself, but explaining it to someone without a statistics background felt uncomfortable. I cited your course principle — that <em>"a number is almost never a sufficient answer"</em> — as something I wanted to internalize, and I think I actually did.
+    </p>
+
+    <p class="letter-p">
+      The evidence I point to is in both of my projects. In the PFI Education Survey project, I wrote an opening Summary of Insights section deliberately aimed at a general audience: a parent, a school administrator, a policymaker. I converted log-odds to odds ratios and explained them in concrete terms — not "the coefficient for Democrat is 1.26" but <em>"Democrats have approximately 3.5× the odds of being a consistent voter compared to the Other group, after controlling for demographics."</em> In Homework 2, I explained the interaction between price and shelf location in plain business terms: the negative effect of price on sales is slightly stronger in good shelf placements than in poor ones. These phrasings did not come easily at first. By the end of the semester, they did.
+    </p>
+
+    <p class="letter-p">
+      What surprised me was how much <strong>teaching helped with this goal</strong>. Working as a tutor at the GVSU tutoring center throughout the semester required me to explain hypothesis testing, confidence intervals, and regression to introductory students with no statistics background. The act of translating ideas for others exposed gaps in my own understanding and forced me to develop clearer language. STA 631 and my tutoring role reinforced each other in ways I did not anticipate.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Goal 2 -->
+    <div class="letter-section-head">Goal 2 — Understanding the Statistics Behind the Models</div>
+
+    <p class="letter-p">
+      In my letter, I admitted that I had, in many cases, been "going through the motions" of running models without genuinely understanding why they worked or when they were the right choice. This was an honest and uncomfortable thing to write, and it remained true at the start of the semester.
+    </p>
+
+    <p class="letter-p">
+      By the end, that has changed. The most important conceptual development for me was understanding <strong>model choice as a consequence of data structure</strong> rather than convention. When I worked on the PFI project, the decision to use Poisson regression for the count outcome — and then to test and reject it in favor of Negative Binomial due to overdispersion — was not a mechanical step from a checklist. I understood why the Poisson assumption of equal mean and variance was being violated, what it meant for the model's behavior, and why a more flexible alternative was warranted. Similarly, the decision to use multinomial logistic regression for the four-category grade outcome came from reasoning about the nature of the outcome, not habit.
+    </p>
+
+    <div class="letter-callout">
+      I also developed a more grounded understanding of inference. Working through confidence intervals, p-values, and their probabilistic interpretations across multiple assignments — and needing to explain them in plain language — moved these concepts from abstract definitions to usable tools.
+    </div>
+
+    <p class="letter-p">
+      I would not claim that my theoretical foundation is complete; probability theory and maximum likelihood estimation are areas I want to continue developing. But I can now say that I understand the <em>why</em> behind the models I fit, and that is a meaningful shift from where I started.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Goal 3 -->
+    <div class="letter-section-head">Goal 3 — Collaborating with Randomly Assigned Teams</div>
+
+    <p class="letter-p">
+      This goal was the most variable in its outcomes. In my letter, I anticipated challenges around different working styles, levels of preparedness, and communication norms. All of those appeared at some point in the diamond project. What I learned is that collaboration skills are less about avoiding those challenges and more about responding to them constructively when they arise.
+    </p>
+
+    <p class="letter-p">
+      My most concrete growth was in being <strong>specific</strong>. Early in the project, I would propose vague contributions — "I'll handle the modeling section" — and then be frustrated when the result did not match what I had imagined. Over time, I learned to specify exactly what I was going to produce and by when, and to ask teammates for the same specificity. Setting internal deadlines before the actual due date, something I committed to in my action plan, made a genuine difference in the group dynamic. I also contributed intentionally to the written narrative — because I wanted to practice communication, not just the technical work.
+    </p>
+
+    <p class="letter-p">
+      I do not think I fully mastered group collaboration this semester. There were moments when I found it difficult to balance my own standards with the need to keep the team moving. That tension is real in professional data science too, and I expect it to remain a growth area for me.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Surprises -->
+    <div class="letter-section-head">What I Did Not Expect</div>
+
+    <p class="letter-p">
+      I did not expect <strong>model diagnostics to become one of my most practiced habits</strong>. Before this course, I treated residual plots as a formality — something to include because it was required. By the end of the semester, I ran them automatically and used them to make real modeling decisions. The diamonds project is the clearest example: the residuals vs fitted plot showing curvature confirmed that polynomial terms were necessary. The VIF analysis led to switching from raw to orthogonal polynomial terms. Diagnostics shaped the model.
+    </p>
+
+    <p class="letter-p">
+      I also did not expect the tidymodels framework to take as long to internalize as it did. Coming from a Python background, the recipe → workflow → fit paradigm was unfamiliar and occasionally frustrating. By the end of the semester, however, I appreciated its consistency — the same pattern applies whether you are fitting a linear regression or a multinomial classifier, which makes code easier to read and extend. This is a professional skill I will carry into post-graduation work.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Looking ahead -->
+    <div class="letter-section-head">Looking Ahead</div>
+
+    <p class="letter-p">
+      The skills developed in STA 631 connect directly to my goal of working in data science, particularly in contexts where model output must be communicated to non-technical stakeholders. The ability to choose an appropriate model, evaluate it honestly, and explain its findings in plain language is exactly what that work requires. I leave this course with a stronger foundation in all three areas than I entered with, and with a clearer sense of where I still need to grow — particularly in probability theory and the mathematical foundations of maximum likelihood estimation, which I plan to continue pursuing.
+    </p>
+
+    <hr class="letter-divider">
+
+    <!-- Self-evaluation -->
+    <div class="letter-section-head">Self-Evaluation</div>
+
+    <p class="letter-p">
+      I believe I earned an <strong>A</strong> in this course. My work demonstrates engagement with all five learning objectives across multiple projects and assignments, consistent use of tidymodels with appropriate validation, careful coefficient interpretation, and genuine growth in statistical communication. More importantly, I approached the material with the intent to understand it rather than to complete it — and I think that intent is reflected in the work. I am proud of what I produced this semester, and I am grateful for a course structure that rewarded depth and process over points.
+    </p>
+
+    <!-- Closing -->
+    <div class="letter-closing">
+      Sincerely,
+    </div>
+
+    <div class="letter-sig">Kabin Devkota</div>
+    <div class="letter-sig-title">
+      MS Data Science and Analytics Candidate<br>
+      Grand Valley State University
+    </div>
+
+  </div><!-- end letter-card -->
+
+</div><!-- end page -->
+
+<footer>
+  <div class="ft-l">Kabin Devkota · STA 631 · Grand Valley State University · Winter 2026</div>
+  <div class="ft-r"><a href="./sta631_portfolio.html">← Back to Portfolio</a></div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('shown'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
