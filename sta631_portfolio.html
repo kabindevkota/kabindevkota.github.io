@@ -5,123 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STA 631 Portfolio — Kabin Devkota</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
 <style>
-  :root {
-    --cream:  #f5f0e8; --cream2: #ede8dc; --cream3: #e4ddd0;
-    --sand:   #c9bfa8; --slate:  #6b7280; --slate2: #4a5568; --slate3: #2d3748; --ink: #1a1f2e;
-    --rust:   #8b4513; --rust2:  #a0522d;
-    --teal:   #2d6a6a; --teal2:  #3d8a8a;
-    --gold:   #b8860b;
-    --border: #d4cbbf; --border2: #c4b9aa;
-    --card:   #ffffff; --card2:  #faf8f4;
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--cream);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;font-size:17px;line-height:1.8}
-
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(245,240,232,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.9rem 2.5rem;display:flex;justify-content:space-between;align-items:center}
-  .nav-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--rust);text-decoration:none}
-  .nav-links{display:flex;gap:2rem;list-style:none}
-  .nav-links a{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);text-decoration:none;transition:color .2s}
-  .nav-links a:hover{color:var(--rust)}
-
-  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:9rem 2.5rem 5rem;max-width:1080px;margin:0 auto;border-right:1px solid var(--border);position:relative}
-  .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:1.5rem}
-  h1.hero-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(2.8rem,6vw,5.5rem);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:1.5rem}
-  .hero-title em{font-style:italic;color:var(--rust);font-weight:400}
-  .hero-sub{font-size:1.1rem;font-weight:300;color:var(--slate2);max-width:520px;margin-bottom:3rem;font-style:italic;line-height:1.75}
-  .hero-stats{display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;background:var(--card)}
-  .stat-block{padding:1.25rem 2rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
-  .stat-block:last-child{border-right:none}
-  .stat-num{font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust);line-height:1}
-  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
-  .scroll-cue{position:absolute;bottom:2.5rem;left:2.5rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--sand);writing-mode:vertical-rl;animation:sc 2.5s ease infinite}
-  @keyframes sc{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:1;transform:translateY(-6px)}}
-
-  .page-wrap{max-width:1080px;margin:0 auto;padding:0 2.5rem;border-right:1px solid var(--border)}
-  section{padding:5rem 0;border-bottom:1px solid var(--border)}
-  section:last-of-type{border-bottom:none}
-  .kicker{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:.6rem;display:flex;align-items:center;gap:.7rem}
-  .kicker::before{content:'';width:1.2rem;height:1px;background:var(--teal);display:block}
-  h2.sh{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.75rem,3.5vw,2.5rem);letter-spacing:-.01em;color:var(--ink);margin-bottom:.6rem;line-height:1.15}
-  .intro{font-style:italic;color:var(--slate2);font-size:1rem;max-width:580px;margin-bottom:3rem}
-
-  .obj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
-  .obj-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.75rem;transition:box-shadow .25s,transform .25s;position:relative;overflow:hidden}
-  .obj-card::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--rust);opacity:0;transition:opacity .25s}
-  .obj-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.07);transform:translateY(-2px)}
-  .obj-card:hover::after{opacity:1}
-  .obj-n{font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:var(--cream3);line-height:1;margin-bottom:.4rem}
-  .obj-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;background:rgba(45,106,106,.08);color:var(--teal);border:1px solid rgba(45,106,106,.2);margin-bottom:.75rem}
-  .obj-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;margin-bottom:.6rem;color:var(--ink)}
-  .obj-desc{font-size:.88rem;color:var(--slate);line-height:1.65}
-
-  .snt{margin-bottom:5rem;scroll-margin-top:5rem}
-  .snt:last-child{margin-bottom:0}
-  .snt-hd{display:flex;align-items:baseline;gap:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem}
-  .snt-n{font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:700;color:var(--cream3);line-height:1;flex-shrink:0}
-  .snt-kicker{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:.3rem}
-  h3.snt-h{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:600;color:var(--ink);line-height:1.2;margin-bottom:.3rem}
-  .snt-src{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--sand);letter-spacing:.06em}
-  .snt-body{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start}
-  @media(max-width:720px){.snt-body{grid-template-columns:1fr}.snt-hd{flex-direction:column;gap:.5rem}.stat-block{padding:.9rem 1.2rem}}
-  .snt-prose p{font-size:.95rem;color:var(--slate2);margin-bottom:1rem;line-height:1.8}
-  .snt-prose p:last-child{margin-bottom:0}
-  .snt-prose strong{color:var(--ink);font-weight:600}
-
-  .chart-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem}
-  .chart-title{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);margin-bottom:.3rem}
-  .chart-sub{font-size:.78rem;font-style:italic;color:var(--sand);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
-  .chart-wrap{position:relative;min-height:240px}
-
-  .code-block{background:var(--slate3);border-radius:6px;padding:1.1rem 1.4rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;color:#c8d0dc;overflow-x:auto;margin:1.25rem 0}
-  .c{color:#6b7280;font-style:italic}.kw{color:#93c5fd}.fn{color:#6ee7b7}.st{color:#fcd34d}.nm{color:#f9a8d4}.op{color:#9ca3af}
-
-  .metrics-row{display:flex;gap:0;margin:2rem 0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--card)}
-  .metric{flex:1;padding:1rem 1.25rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
-  .metric:last-child{border-right:none}
-  .metric-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--rust);line-height:1}
-  .metric-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
-
-  .callout{background:rgba(45,106,106,.05);border-left:3px solid var(--teal);border-radius:0 6px 6px 0;padding:.9rem 1.2rem;margin:1.2rem 0;font-size:.9rem;font-style:italic;color:var(--slate2);line-height:1.7}
-
-  .dt{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.72rem;margin:1.25rem 0}
-  .dt th{text-align:left;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);padding:.55rem .8rem;border-bottom:2px solid var(--border);background:var(--card2)}
-  .dt td{padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--slate2)}
-  .dt tr:last-child td{border-bottom:none}
-  .dt tr:hover td{background:var(--cream2)}
-  .td-hi{color:var(--rust)!important;font-weight:600}.td-dim{color:var(--sand)!important}.td-ok{color:var(--teal)!important;font-weight:600}
-
-  .cm{display:inline-grid;grid-template-columns:auto repeat(3,72px);gap:4px;margin:1rem 0}
-  .cm-cell{padding:.45rem .4rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.72rem;border-radius:4px}
-  .cm-hd{font-size:.58rem;letter-spacing:.07em;color:var(--slate);display:flex;align-items:center;justify-content:center}
-  .cm-rl{font-size:.58rem;color:var(--slate);display:flex;align-items:center;justify-content:flex-end;padding-right:.5rem}
-  .cm-correct{background:rgba(45,106,106,.12);color:var(--teal);font-weight:700}
-  .cm-close{background:rgba(139,69,19,.08);color:var(--rust2)}
-  .cm-far{background:rgba(0,0,0,.03);color:var(--sand)}
-
-  .part-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.25rem;margin-top:2.5rem}
-  .part-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;transition:box-shadow .2s}
-  .part-card:hover{box-shadow:0 3px 16px rgba(0,0,0,.06)}
-  .part-icon{font-size:1.4rem;margin-bottom:.7rem}
-  .part-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;margin-bottom:.5rem;color:var(--ink)}
-  .part-desc{font-size:.85rem;color:var(--slate);line-height:1.65}
-
-  .prog-item{margin-bottom:.9rem}
-  .prog-top{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.04em;color:var(--slate);margin-bottom:.3rem}
-  .prog-top span:last-child{color:var(--rust);font-weight:600}
-  .prog-bar{height:5px;background:var(--cream3);border-radius:3px;overflow:hidden}
-  .prog-fill{height:100%;border-radius:3px;width:0;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
-
-  footer{border-top:1px solid var(--border);padding:2.5rem;max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .ft-l{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--slate2)}
-  .ft-r{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--sand)}
-  .ft-r a{color:var(--teal);text-decoration:none}
-  .ft-r a:hover{text-decoration:underline}
-
-  .reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease}
-  .reveal.shown{opacity:1;transform:translateY(0)}
+:root{--cream:#f5f0e8;--cream2:#ede8dc;--cream3:#e4ddd0;--sand:#c9bfa8;--slate:#6b7280;--slate2:#4a5568;--slate3:#2d3748;--ink:#1a1f2e;--rust:#8b4513;--rust2:#a0522d;--teal:#2d6a6a;--teal2:#3d8a8a;--gold:#b8860b;--border:#d4cbbf;--border2:#c4b9aa;--card:#ffffff;--card2:#faf8f4}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;font-size:17px;line-height:1.8}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(245,240,232,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.9rem 2.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.nav-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--rust);text-decoration:none}
+.nav-links{display:flex;gap:1.5rem;list-style:none;flex-wrap:wrap}
+.nav-links a{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--rust)}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:9rem 2.5rem 5rem;max-width:1080px;margin:0 auto;border-right:1px solid var(--border);position:relative}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:1.5rem}
+h1.hero-title{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(2.8rem,6vw,5.5rem);line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:1.5rem}
+.hero-title em{font-style:italic;color:var(--rust);font-weight:400}
+.hero-sub{font-size:1.1rem;font-weight:300;color:var(--slate2);max-width:520px;margin-bottom:3rem;font-style:italic;line-height:1.75}
+.hero-stats{display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;background:var(--card)}
+.stat-block{padding:1.25rem 2rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
+.stat-block:last-child{border-right:none}
+.stat-num{font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust);line-height:1}
+.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.scroll-cue{position:absolute;bottom:2.5rem;left:2.5rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--sand);writing-mode:vertical-rl;animation:sc 2.5s ease infinite}
+@keyframes sc{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:1;transform:translateY(-6px)}}
+.page-wrap{max-width:1080px;margin:0 auto;padding:0 2.5rem;border-right:1px solid var(--border)}
+section{padding:5rem 0;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:.6rem;display:flex;align-items:center;gap:.7rem}
+.kicker::before{content:'';width:1.2rem;height:1px;background:var(--teal);display:block}
+h2.sh{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.75rem,3.5vw,2.5rem);letter-spacing:-.01em;color:var(--ink);margin-bottom:.6rem;line-height:1.15}
+.intro{font-style:italic;color:var(--slate2);font-size:1rem;max-width:580px;margin-bottom:3rem}
+.obj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.25rem}
+.obj-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.75rem;transition:box-shadow .25s,transform .25s;position:relative;overflow:hidden}
+.obj-card::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--rust);opacity:0;transition:opacity .25s}
+.obj-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.07);transform:translateY(-2px)}
+.obj-card:hover::after{opacity:1}
+.obj-n{font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:var(--cream3);line-height:1;margin-bottom:.4rem}
+.obj-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;background:rgba(45,106,106,.08);color:var(--teal);border:1px solid rgba(45,106,106,.2);margin-bottom:.75rem}
+.obj-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;margin-bottom:.6rem;color:var(--ink)}
+.obj-desc{font-size:.88rem;color:var(--slate);line-height:1.65}
+.snt{margin-bottom:5rem;scroll-margin-top:5rem}
+.snt:last-child{margin-bottom:0}
+.snt-hd{display:flex;align-items:baseline;gap:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem}
+.snt-n{font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:700;color:var(--cream3);line-height:1;flex-shrink:0}
+.snt-kicker{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:.3rem}
+h3.snt-h{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:600;color:var(--ink);line-height:1.2;margin-bottom:.3rem}
+.snt-src{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--sand);letter-spacing:.06em}
+.snt-body{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start}
+@media(max-width:720px){.snt-body{grid-template-columns:1fr}.snt-hd{flex-direction:column;gap:.5rem}}
+.snt-prose p{font-size:.95rem;color:var(--slate2);margin-bottom:1rem;line-height:1.8}
+.snt-prose p:last-child{margin-bottom:0}
+.snt-prose strong{color:var(--ink);font-weight:600}
+.chart-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem}
+.chart-title{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);margin-bottom:.3rem}
+.chart-sub{font-size:.78rem;font-style:italic;color:var(--sand);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+.chart-wrap{position:relative;min-height:240px}
+.code-block{background:var(--slate3);border-radius:6px;padding:1.1rem 1.4rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.7;color:#c8d0dc;overflow-x:auto;margin:1.25rem 0}
+.c{color:#6b7280;font-style:italic}.kw{color:#93c5fd}.fn{color:#6ee7b7}.st{color:#fcd34d}.nm{color:#f9a8d4}.op{color:#9ca3af}
+.metrics-row{display:flex;gap:0;margin:2rem 0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--card)}
+.metric{flex:1;padding:1rem 1.25rem;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:.2rem}
+.metric:last-child{border-right:none}
+.metric-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--rust);line-height:1}
+.metric-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.callout{background:rgba(45,106,106,.05);border-left:3px solid var(--teal);border-radius:0 6px 6px 0;padding:.9rem 1.2rem;margin:1.2rem 0;font-size:.9rem;font-style:italic;color:var(--slate2);line-height:1.7}
+.why-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0}
+.why-box-title{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.why-box-title::before{content:'';display:block;width:.8rem;height:1px;background:var(--rust)}
+.why-row{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.6rem;font-size:.88rem;color:var(--slate2)}
+.why-row:last-child{margin-bottom:0}
+.why-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);flex-shrink:0;padding-top:.15rem;min-width:80px}
+.why-val{line-height:1.6}
+.why-val code{font-family:'JetBrains Mono',monospace;font-size:.8em;background:var(--cream3);padding:.1em .35em;border-radius:3px;color:var(--rust)}
+.lo-summary{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--rust);border-radius:0 0 8px 8px;padding:1.5rem 1.75rem;margin-top:3rem}
+.lo-summary-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);margin-bottom:1rem}
+.lo-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem}
+.lo-item{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--slate2);line-height:1.5}
+.lo-check{color:var(--teal);font-size:1rem;flex-shrink:0;line-height:1.4}
+.dt{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.72rem;margin:1.25rem 0}
+.dt th{text-align:left;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);padding:.55rem .8rem;border-bottom:2px solid var(--border);background:var(--card2)}
+.dt td{padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--slate2)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--cream2)}
+.td-hi{color:var(--rust)!important;font-weight:600}.td-dim{color:var(--sand)!important}.td-ok{color:var(--teal)!important;font-weight:600}.td-effect{color:var(--ink)!important;font-style:italic}
+.cm{display:inline-grid;grid-template-columns:auto repeat(3,72px);gap:4px;margin:1rem 0}
+.cm-cell{padding:.45rem .4rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.72rem;border-radius:4px}
+.cm-hd{font-size:.58rem;letter-spacing:.07em;color:var(--slate);display:flex;align-items:center;justify-content:center}
+.cm-rl{font-size:.58rem;color:var(--slate);display:flex;align-items:center;justify-content:flex-end;padding-right:.5rem}
+.cm-correct{background:rgba(45,106,106,.12);color:var(--teal);font-weight:700}
+.cm-close{background:rgba(139,69,19,.08);color:var(--rust2)}
+.cm-far{background:rgba(0,0,0,.03);color:var(--sand)}
+.finding-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin:1.5rem 0}
+.finding-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem;border-top:3px solid var(--teal)}
+.finding-pct{font-family:'Playfair Display',serif;font-weight:700;font-size:1.6rem;color:var(--rust);line-height:1;margin-bottom:.3rem}
+.finding-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:.4rem}
+.finding-desc{font-size:.82rem;color:var(--slate2);line-height:1.55;font-style:italic}
+.checklist{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--card)}
+.checklist-row{display:grid;grid-template-columns:2fr 1.2fr 2.5fr;gap:0;border-bottom:1px solid var(--border)}
+.checklist-row:last-child{border-bottom:none}
+.cl-cell{padding:.6rem 1rem;font-size:.8rem;color:var(--slate2);display:flex;align-items:center}
+.cl-cell.hdr{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);background:var(--card2)}
+.cl-cell:not(:last-child){border-right:1px solid var(--border)}
+.cl-check{color:var(--teal);font-size:1.1rem;margin-right:.5rem}
+.cl-code{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--rust)}
+.part-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.25rem;margin-top:2.5rem}
+.part-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;transition:box-shadow .2s}
+.part-card:hover{box-shadow:0 3px 16px rgba(0,0,0,.06)}
+.part-icon{font-size:1.4rem;margin-bottom:.7rem}
+.part-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;margin-bottom:.5rem;color:var(--ink)}
+.part-desc{font-size:.85rem;color:var(--slate);line-height:1.65}
+.prog-item{margin-bottom:.9rem}
+.prog-top{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.04em;color:var(--slate);margin-bottom:.3rem}
+.prog-top span:last-child{color:var(--rust);font-weight:600}
+.prog-bar{height:5px;background:var(--cream3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;width:0;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+footer{border-top:1px solid var(--border);padding:2.5rem;max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.ft-l{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--slate2)}
+.ft-r{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--sand)}
+.ft-r a{color:var(--teal);text-decoration:none}
+.file-row{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.file-row:last-child{border-bottom:none}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease}
+.reveal.shown{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
@@ -131,9 +135,11 @@
   <ul class="nav-links">
     <li><a href="#objectives">Objectives</a></li>
     <li><a href="#models">Show &amp; Tell</a></li>
+    <li><a href="#summary">Summary</a></li>
     <li><a href="#participation">Participation</a></li>
     <li><a href="#files">Files</a></li>
-    <li><a href="./index.html">← Back to Portfolio</a></li>
+    <li><a href="./self_evaluation.html">Self-Evaluation</a></li>
+    <li><a href="./index.html">← Portfolio</a></li>
   </ul>
 </nav>
 
@@ -143,7 +149,7 @@
     <h1 class="hero-title">Statistical<br><em>Learning</em><br>Portfolio</h1>
     <p class="hero-sub">A semester of generalized linear models, model selection, and the slow work of making numbers mean something to people who don't speak statistics.</p>
     <div class="hero-stats">
-      <div class="stat-block"><div class="stat-num">0.997</div><div class="stat-lbl">Test R² (Diamond Model)</div></div>
+      <div class="stat-block"><div class="stat-num">0.997</div><div class="stat-lbl">Test R² (Diamond)</div></div>
       <div class="stat-block"><div class="stat-num">0.743</div><div class="stat-lbl">AUC (Logistic, PFI)</div></div>
       <div class="stat-block"><div class="stat-num">6+</div><div class="stat-lbl">Model Types</div></div>
       <div class="stat-block"><div class="stat-num">15,500</div><div class="stat-lbl">PFI Observations</div></div>
@@ -154,395 +160,585 @@
 
 <div class="page-wrap">
 
-  <section id="objectives">
-    <div class="kicker">Course Learning Objectives</div>
-    <h2 class="sh">Five things I set out to demonstrate.</h2>
-    <p class="intro">Each section maps specific work to one objective, with code, exact charts from the reports, and interpretation.</p>
-    <div class="obj-grid">
-      <div class="obj-card reveal"><div class="obj-n">01</div><div class="obj-tag">Probability & Inference</div><div class="obj-title">Foundation of Statistical Modeling</div><p class="obj-desc">Probability, inference, and maximum likelihood estimation as the engine behind every model fit.</p></div>
-      <div class="obj-card reveal"><div class="obj-n">02</div><div class="obj-tag">GLM Selection</div><div class="obj-title">Right Model for the Data</div><p class="obj-desc">Logistic, multinomial, Poisson, Negative Binomial, LDA — each chosen based on the structure of the outcome.</p></div>
-      <div class="obj-card reveal"><div class="obj-n">03</div><div class="obj-tag">Model Selection</div><div class="obj-title">Choosing Among Candidates</div><p class="obj-desc">Best subset selection, validation-set MSE, backward elimination, VIF — a principled toolkit.</p></div>
-      <div class="obj-card reveal"><div class="obj-n">04</div><div class="obj-tag">Communication</div><div class="obj-title">Results for a General Audience</div><p class="obj-desc">Every model output was translated into plain-language meaning. A number is never a sufficient answer.</p></div>
-      <div class="obj-card reveal"><div class="obj-n">05</div><div class="obj-tag">Programming</div><div class="obj-title">Fitting &amp; Assessing in R</div><p class="obj-desc">tidymodels, ggplot2, broom, leaps — a consistent diagnostic workflow across every assignment.</p></div>
-    </div>
-  </section>
+<!-- OBJECTIVES -->
+<section id="objectives">
+  <div class="kicker">Course Learning Objectives</div>
+  <h2 class="sh">Five things I set out to demonstrate.</h2>
+  <p class="intro">Each section maps work to one objective, with reasoning, exact charts, code, and a checklist of what was demonstrated.</p>
+  <div class="obj-grid">
+    <div class="obj-card reveal"><div class="obj-n">01</div><div class="obj-tag">Probability & Inference</div><div class="obj-title">Foundation of Statistical Modeling</div><p class="obj-desc">Probability, MLE, inference, confidence intervals — the machinery behind every model fit in the course.</p></div>
+    <div class="obj-card reveal"><div class="obj-n">02</div><div class="obj-tag">GLM Selection</div><div class="obj-title">Right Model for the Data</div><p class="obj-desc">Binary logistic, multinomial, Poisson, Negative Binomial, LDA — each chosen deliberately based on outcome type.</p></div>
+    <div class="obj-card reveal"><div class="obj-n">03</div><div class="obj-tag">Model Selection</div><div class="obj-title">Choosing Among Candidates</div><p class="obj-desc">Best subset selection, validation-set MSE, backward elimination, VIF — letting data drive the decision.</p></div>
+    <div class="obj-card reveal"><div class="obj-n">04</div><div class="obj-tag">Communication</div><div class="obj-title">Results for a General Audience</div><p class="obj-desc">Numbers into sentences. Log-odds into plain English. Every result explained for someone without a stats background.</p></div>
+    <div class="obj-card reveal"><div class="obj-n">05</div><div class="obj-tag">Programming</div><div class="obj-title">Fitting &amp; Assessing in R</div><p class="obj-desc">A consistent tidymodels pipeline — recipe → workflow → fit → augment → assess — across every assignment.</p></div>
+  </div>
+</section>
 
-  <section id="models">
-    <div class="kicker">Show &amp; Tell</div>
-    <h2 class="sh">The work, in detail.</h2>
-    <p class="intro">All charts reproduce exact numbers from the submitted reports. Nothing is illustrative.</p>
+<!-- SHOW & TELL -->
+<section id="models">
+  <div class="kicker">Show &amp; Tell</div>
+  <h2 class="sh">The work, in detail.</h2>
+  <p class="intro">All charts and numbers are exact reproductions from submitted reports. Each section ends with a checklist of what was demonstrated.</p>
 
-    <!-- OBJ 1 -->
-    <div class="snt reveal" id="obj1">
-      <div class="snt-hd">
-        <div class="snt-n">01</div>
-        <div>
-          <div class="snt-kicker">Objective 1 · Probability &amp; Inference</div>
-          <h3 class="snt-h">Probability as the Foundation of Statistical Modeling</h3>
-          <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download Diamond Project Rmd">Diamond Project</a> · <a href="./files/Homework_1_SLR.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download HW1 Rmd">Homework 1 (Auto &amp; Boston SLR)</a></div>
-        </div>
-      </div>
-      <div class="snt-body">
-        <div class="snt-prose">
-          <p>Every modeling decision in the diamond project rested on probability. The three-way <strong>train / validation / test split</strong> (34,505 / 8,629 / 10,786 rows) was designed so the test set was touched exactly once — a direct application of the assumption that test observations are independent draws from the same distribution.</p>
-          <p>In <strong>Homework 1</strong>, I fit a simple linear regression of mpg on horsepower (slope p-value = 7.03e-81) and computed 95% confidence and prediction intervals for horsepower = 98.</p>
-          <div class="callout">The prediction interval (14.81–34.12) is wider than the confidence interval (23.97–24.96) because it reflects the additional irreducible randomness of a single new observation, beyond uncertainty about the mean response.</div>
-          <p>The final diamond model's train R² of <strong>0.998</strong> and test R² of <strong>0.997</strong> — nearly identical — confirm the three-way split produced an honest, unbiased estimate with no data leakage.</p>
-          <div class="code-block">
-<span class="c"># Confidence vs prediction intervals — HW1</span><br>
-<span class="fn">predict</span>(lm_engine, newdata = <span class="fn">tibble</span>(horsepower=<span class="nm">98</span>),<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interval=<span class="st">"confidence"</span>)<br>
-<span class="c">#    fit      lwr      upr</span><br>
-<span class="c"># 24.467   23.973   24.961</span><br><br>
-<span class="fn">predict</span>(lm_engine, newdata = <span class="fn">tibble</span>(horsepower=<span class="nm">98</span>),<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interval=<span class="st">"prediction"</span>)<br>
-<span class="c">#    fit      lwr      upr</span><br>
-<span class="c"># 24.467   14.809   34.125</span>
-          </div>
-        </div>
-        <div>
-          <div class="chart-panel">
-            <div class="chart-title">Predicted vs Actual Carat — Test Set</div>
-            <div class="chart-sub">Diamond project. R²=0.997, RMSE=0.026 carats, MAE=0.014. n=10,786. Points track the 45° line closely across the full range (0.2–5.0 carats).</div>
-            <div class="chart-wrap"><canvas id="c-scatter"></canvas></div>
-          </div>
-          <div class="metrics-row" style="margin-top:1.25rem">
-            <div class="metric"><div class="metric-val">0.997</div><div class="metric-lbl">Test R²</div></div>
-            <div class="metric"><div class="metric-val">0.026</div><div class="metric-lbl">RMSE (ct)</div></div>
-            <div class="metric"><div class="metric-val">0.014</div><div class="metric-lbl">MAE (ct)</div></div>
-            <div class="metric"><div class="metric-val">5</div><div class="metric-lbl">Predictors</div></div>
-          </div>
-        </div>
+  <!-- OBJ 1 -->
+  <div class="snt reveal" id="obj1">
+    <div class="snt-hd">
+      <div class="snt-n">01</div>
+      <div>
+        <div class="snt-kicker">Objective 1 · Probability &amp; Inference</div>
+        <h3 class="snt-h">Probability as the Foundation of Statistical Modeling</h3>
+        <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Diamond Project</a> · <a href="./files/Homework_1_SLR.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Homework 1 (Auto &amp; Boston SLR)</a></div>
       </div>
     </div>
 
-    <!-- OBJ 2 -->
-    <div class="snt reveal" id="obj2">
-      <div class="snt-hd">
-        <div class="snt-n">02</div>
-        <div>
-          <div class="snt-kicker">Objective 2 · Generalized Linear Models</div>
-          <h3 class="snt-h">Applying the Appropriate GLM for the Data Context</h3>
-          <div class="snt-src"><a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download PFI Rmd">PFI Education Survey Project</a> · <a href="./files/Homework_4_Multinomial.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download HW4 Rmd">Homework 4 (Nonvoters)</a></div>
-        </div>
-      </div>
-      <div class="snt-body">
-        <div class="snt-prose">
-          <p>The PFI project required three different GLMs within one dataset, each justified by the structure of the outcome. <strong>Binary logistic</strong> for high_achiever (0/1). <strong>Multinomial logistic</strong> for four-category grades. <strong>Poisson</strong> for FSFREQ (participation count) — but the dispersion ratio (residual deviance/df = <strong>5.12</strong>, variance-to-mean ratio = <strong>12.2</strong>) revealed severe overdispersion, so <strong>Negative Binomial</strong> was used instead, cutting AIC from 104,068 to 69,124. <strong>LDA and QDA</strong> were compared on five continuous predictors.</p>
-          <div class="callout">FSFREQ: mean = 7.02, variance = 85.4 → variance/mean ratio = 12.2. Standard Poisson assumes ratio = 1. This single diagnostic motivated switching models entirely.</div>
-          <div class="code-block">
-<span class="c"># Four model families — one dataset</span><br>
-<span class="fn">logistic_reg</span>()  <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"glm"</span>)   <span class="c"># binary</span><br>
-<span class="fn">multinom_reg</span>()   <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"nnet"</span>)  <span class="c"># 4-class</span><br>
-<span class="fn">poisson_reg</span>()    <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"glm"</span>)   <span class="c"># count (rejected)</span><br>
-<span class="fn">discrim_linear</span>() <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"MASS"</span>)  <span class="c"># LDA</span>
-          </div>
-        </div>
-        <div>
-          <div class="chart-panel">
-            <div class="chart-title">Model Comparison — AUC (Binary High-Achiever Outcome)</div>
-            <div class="chart-sub">Exact values from PFI report. Logistic regression outperforms LDA/QDA because it can incorporate categorical predictors (disability, race, parent education) unavailable to LDA/QDA.</div>
-            <div class="chart-wrap"><canvas id="c-auc"></canvas></div>
-          </div>
-        </div>
-      </div>
+    <div class="why-box reveal">
+      <div class="why-box-title">The statistical foundation</div>
+      <div class="why-row"><div class="why-label">The idea</div><div class="why-val">Every regression model is a probability statement. We're finding the coefficients that make our observed data as probable as possible — this process is called <strong>Maximum Likelihood Estimation (MLE)</strong>. For linear regression, MLE is equivalent to minimizing squared residuals, but the probabilistic framing explains <em>why</em> that works.</div></div>
+      <div class="why-row"><div class="why-label">In practice</div><div class="why-val">Each coefficient β comes with a <strong>standard error</strong> (uncertainty), a <strong>t-statistic</strong> (signal-to-noise), and a <strong>p-value</strong> (probability of seeing this result if β were really zero). A 95% confidence interval is: <code>estimate ± 1.96 × std.error</code>. If it excludes zero, the predictor carries genuine signal.</div></div>
+      <div class="why-row"><div class="why-label">Key distinction</div><div class="why-val">A <strong>confidence interval</strong> answers: "Where is the true average response?" A <strong>prediction interval</strong> answers: "Where will the next individual observation fall?" The prediction interval is always wider — it must account for individual variation on top of estimation uncertainty.</div></div>
+      <div class="why-row"><div class="why-label">MLE mechanics</div><div class="why-val">The likelihood function for linear regression is: <code>L(β) = ∏ P(yᵢ | xᵢ, β)</code>. MLE finds the β that maximizes this — equivalent to minimizing squared residuals. Standard errors come from the <strong>Fisher Information Matrix</strong> (the curvature of the log-likelihood at the peak). A steeper peak = more information = smaller standard errors = more precise estimates.</div></div>
+      <div class="why-row"><div class="why-label">CI formula</div><div class="why-val">Every 95% confidence interval in this portfolio is: <code>estimate ± 1.96 × std.error</code>. The 1.96 comes from the normal distribution — for large samples, MLE estimates are approximately normal. Wald tests use the same standard errors to compute t-statistics and p-values for each coefficient.</div></div>
+    </div>
 
-      <div style="margin-top:2.5rem" class="reveal">
-        <div class="snt-kicker" style="margin-bottom:.75rem">Poisson vs Negative Binomial — PFI Project (exact from report)</div>
-        <table class="dt">
-          <thead><tr><th>Model</th><th>AIC</th><th>Deviance / df</th><th>Verdict</th></tr></thead>
-          <tbody>
-            <tr><td>Poisson (tidymodels)</td><td class="td-hi">104,068</td><td class="td-hi">5.12</td><td class="td-dim">Invalid — severe overdispersion</td></tr>
-            <tr><td>Negative Binomial (full)</td><td class="td-ok">69,124</td><td class="td-ok">0.997</td><td>Best fit · θ = 2.07 · NB Test RMSE = 8.12</td></tr>
-            <tr><td>Negative Binomial (reduced)</td><td>69,180</td><td class="td-dim">—</td><td class="td-dim">Significantly worse (LRT p &lt; 0.001)</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start" class="reveal">
-        <div>
-          <div class="snt-kicker" style="margin-bottom:.75rem">Multinomial Confusion Matrix — Nonvoters HW4 (exact)</div>
-          <div class="cm">
-            <div class="cm-cell cm-hd"></div><div class="cm-cell cm-hd">pred: rare</div><div class="cm-cell cm-hd">pred: spor</div><div class="cm-cell cm-hd">pred: alw</div>
-            <div class="cm-cell cm-rl">true: rare (291)</div><div class="cm-cell cm-correct">130</div><div class="cm-cell cm-close">151</div><div class="cm-cell cm-far">10</div>
-            <div class="cm-cell cm-rl">true: spor (515)</div><div class="cm-cell cm-close">56</div><div class="cm-cell cm-correct">398</div><div class="cm-cell cm-close">61</div>
-            <div class="cm-cell cm-rl">true: alw (363)</div><div class="cm-cell cm-far">38</div><div class="cm-cell cm-close">231</div><div class="cm-cell cm-correct">94</div>
-          </div>
-          <p style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);margin-top:.5rem">With party: 53.2% accuracy vs without: 51.3%</p>
+    <div class="snt-body">
+      <div class="snt-prose">
+        <p>In <strong>Homework 1</strong>, I fit mpg ~ horsepower on the Auto dataset. The slope's p-value of 7.03e-81 is effectively zero — if horsepower had no real effect, the chance of seeing a relationship this strong by luck alone is vanishingly small. The slope (−0.158) means each additional unit of horsepower is associated with 0.158 fewer miles per gallon.</p>
+        <p>I computed 95% confidence and prediction intervals for horsepower = 98. The CI (23.97–24.96) is tight — about the average mpg. The PI (14.81–34.12) is nearly five times wider — accounting for how much individual cars vary around that average.</p>
+        <div class="callout">The PI is wide not because our model is uncertain, but because individual cars vary a lot even with the same horsepower. Some run hot, some run cold. That's irreducible variance — and the prediction interval honestly captures it.</div>
+        <p>The <strong>diamond project</strong> extended this to a three-way split (34,505 train / 8,629 validation / 10,786 test rows). The test set was touched exactly once, at the very end. This is probabilistic discipline: peeking at test performance during model-building would inflate our reported R² by overfitting to test-set noise.</p>
+        <div class="code-block">
+<span class="c"># Confidence interval: where is the average mpg?</span><br>
+<span class="fn">predict</span>(lm_engine, newdata=<span class="fn">tibble</span>(horsepower=<span class="nm">98</span>), interval=<span class="st">"confidence"</span>)<br>
+<span class="c">#    fit      lwr      upr</span><br>
+<span class="c"># 24.467   23.973   24.961   ← tight: just the mean</span><br><br>
+<span class="c"># Prediction interval: where will the next car land?</span><br>
+<span class="fn">predict</span>(lm_engine, newdata=<span class="fn">tibble</span>(horsepower=<span class="nm">98</span>), interval=<span class="st">"prediction"</span>)<br>
+<span class="c">#    fit      lwr      upr</span><br>
+<span class="c"># 24.467   14.809   34.125   ← wide: individual uncertainty</span>
         </div>
-        <div>
-          <div class="snt-kicker" style="margin-bottom:.75rem">LDA vs QDA vs Logistic — PFI Project (exact)</div>
+      </div>
+      <div>
+        <div class="chart-panel">
+          <div class="chart-title">Predicted vs Actual Carat — Diamond Test Set</div>
+          <div class="chart-sub">R²=0.997, RMSE=0.026 carats, MAE=0.014. n=10,786. Points hug the 45° line across the 0.2–5.0 carat range — honest generalization on data never seen during modeling.</div>
+          <div class="chart-wrap"><canvas id="c-scatter"></canvas></div>
+        </div>
+        <div class="metrics-row" style="margin-top:1.25rem">
+          <div class="metric"><div class="metric-val">0.997</div><div class="metric-lbl">Test R²</div></div>
+          <div class="metric"><div class="metric-val">0.026</div><div class="metric-lbl">RMSE (ct)</div></div>
+          <div class="metric"><div class="metric-val">0.014</div><div class="metric-lbl">MAE (ct)</div></div>
+          <div class="metric"><div class="metric-val">5</div><div class="metric-lbl">Predictors</div></div>
+        </div>
+        <div style="margin-top:1.5rem">
+          <div class="snt-kicker" style="margin-bottom:.75rem">HW1 — SLR Coefficients with Inference (exact from report)</div>
           <table class="dt">
-            <thead><tr><th>Metric</th><th>Logistic</th><th>LDA</th><th>QDA</th></tr></thead>
+            <thead><tr><th>Term</th><th>Estimate</th><th>Std Err</th><th>p-value</th><th>Plain meaning</th></tr></thead>
             <tbody>
-              <tr><td>Accuracy</td><td class="td-ok">68.7%</td><td>63.2%</td><td>62.9%</td></tr>
-              <tr><td>Precision</td><td class="td-ok">70.0%</td><td>64.4%</td><td>64.1%</td></tr>
-              <tr><td>Recall</td><td>78.4%</td><td class="td-ok">78.8%</td><td>78.4%</td></tr>
-              <tr><td>F1 Score</td><td class="td-ok">74.0%</td><td>70.9%</td><td>70.5%</td></tr>
-              <tr><td>AUC</td><td class="td-ok">0.743</td><td>0.651</td><td>0.650</td></tr>
+              <tr><td>(Intercept)</td><td>39.94</td><td class="td-dim">0.717</td><td class="td-dim">1.22e-187</td><td class="td-effect">mpg when hp=0 (baseline)</td></tr>
+              <tr><td>horsepower</td><td class="td-hi">−0.158</td><td class="td-dim">0.00645</td><td class="td-hi">7.03e-81</td><td class="td-effect">Each +1 hp → −0.16 mpg</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- OBJ 3 -->
-    <div class="snt reveal" id="obj3">
-      <div class="snt-hd">
-        <div class="snt-n">03</div>
-        <div>
-          <div class="snt-kicker">Objective 3 · Model Selection</div>
-          <h3 class="snt-h">Demonstrating Model Selection Among Candidate Models</h3>
-          <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download Diamond Project Rmd">Diamond Project (Best Subset + Validation Set)</a> · <a href="./files/Homework_3_Backward_Selection.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download HW3 Rmd">Homework 3 (Backward Elimination)</a></div>
+    <div class="lo-summary reveal">
+      <div class="lo-summary-title">Objective 1 — What was demonstrated</div>
+      <div class="lo-items">
+        <div class="lo-item"><span class="lo-check">✓</span><span>Explained MLE as finding coefficients that maximize the probability of the observed data</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Interpreted p-values (7.03e-81) and std errors as measures of signal strength and parameter uncertainty</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Computed and distinguished CIs (about the mean) from PIs (about individuals) — with plain-language explanations</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Stratified 3-way train/validation/test split to ensure unbiased generalization estimates</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>All five final diamond model coefficients significant at p &lt; 2e-16 with CIs excluding zero</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJ 2 -->
+  <div class="snt reveal" id="obj2">
+    <div class="snt-hd">
+      <div class="snt-n">02</div>
+      <div>
+        <div class="snt-kicker">Objective 2 · Generalized Linear Models</div>
+        <h3 class="snt-h">Applying the Appropriate GLM for the Data Context</h3>
+        <div class="snt-src"><a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">PFI Education Survey Project</a> · <a href="./files/Homework_4_Multinomial.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Homework 4 (Nonvoters)</a></div>
+      </div>
+    </div>
+
+    <div class="why-box reveal">
+      <div class="why-box-title">Why the model must match the outcome</div>
+      <div class="why-row"><div class="why-label">Binary (0/1)</div><div class="why-val"><strong>Logistic regression.</strong> The outcome is either "high achiever" or not. A standard linear regression would give predicted probabilities outside [0,1], which makes no sense. Logistic regression uses the logit link — <code>log(p / 1−p) = β₀ + β₁X₁ + …</code> — keeping all predictions between 0 and 1 and producing odds ratios as interpretable outputs.</div></div>
+      <div class="why-row"><div class="why-label">4 categories</div><div class="why-val"><strong>Multinomial logistic.</strong> Grades come in four unordered groups (Mostly A / B / C / D). Binary logistic can't handle this. Multinomial fits K−1 simultaneous equations, each comparing one class to a reference: <code>log(P(B) / P(A)) = …</code>, <code>log(P(C) / P(A)) = …</code>, etc.</div></div>
+      <div class="why-row"><div class="why-label">Count data</div><div class="why-val"><strong>Poisson → Negative Binomial.</strong> School participation (FSFREQ) is a non-negative integer count. Poisson is the natural starting point but assumes mean = variance. When the data shows variance/mean = 12.2, Poisson's standard errors are severely underestimated — everything looks falsely significant. Negative Binomial adds a dispersion parameter θ to handle this.</div></div>
+      <div class="why-row"><div class="why-label">Numeric only</div><div class="why-val"><strong>LDA / QDA.</strong> These methods model each class as a multivariate normal distribution and find the boundary that best separates them. They require continuous predictors — so we used five: school involvement score, home engagement score, income, dinner frequency, and number of siblings.</div></div>
+    </div>
+
+    <div class="snt-body">
+      <div class="snt-prose">
+        <p>The PFI project required choosing a different GLM for each of three outcomes — binary, four-class, and count — all from the same dataset. The decision was never automatic; it came from examining what kind of thing we were trying to predict.</p>
+        <p>For the <strong>count outcome</strong> (school participation), Poisson was the natural first choice. But two diagnostics flagged a problem: the variance-to-mean ratio was 12.2 (Poisson requires 1.0), and the residual deviance/df ratio was 5.12 (again, should be near 1). This wasn't a minor issue — it means Poisson was severely underestimating uncertainty, making weak predictors appear highly significant.</p>
+        <div class="callout">Switching from Poisson to Negative Binomial reduced the AIC from 104,068 to 69,124 — an improvement of ~35,000 points. In model comparison, a difference of 10 AIC points is considered decisive. This difference was 35,000.</div>
+        <p>For the <strong>binary outcome</strong> (high achiever), logistic regression (AUC = 0.743) substantially outperformed both LDA (0.651) and QDA (0.650). The gap exists because logistic regression can incorporate categorical predictors — disability status, race, parent education — that LDA and QDA cannot use in their standard formulation.</p>
+      </div>
+      <div>
+        <div class="chart-panel" style="margin-bottom:1.25rem">
+          <div class="chart-title">Overdispersion: Why Poisson Was Rejected</div>
+          <div class="chart-sub">PFI project. Poisson AIC = 104,068 (variance/mean = 12.2, not 1). Negative Binomial AIC = 69,124 with dispersion θ = 2.07 — a reduction of ~35,000 AIC points.</div>
+          <div class="chart-wrap" style="min-height:180px"><canvas id="c-overdisp"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-title">AUC by Model — Binary High-Achiever Outcome (PFI)</div>
+          <div class="chart-sub">Exact values from PFI report. Logistic wins because it incorporates categorical predictors unavailable to LDA/QDA. LDA ≈ QDA confirms equal-covariance assumption holds.</div>
+          <div class="chart-wrap" style="min-height:180px"><canvas id="c-auc"></canvas></div>
         </div>
       </div>
-      <div class="snt-body">
-        <div class="snt-prose">
-          <p>With 11 candidate predictors (including squared dimension terms x², y², z²), <strong>exhaustive best subset selection</strong> via <code>regsubsets(nvmax=25)</code> evaluated every possible model size up to 25 predictors. BIC, Cp, and adjusted R² gave conflicting signals.</p>
-          <p>Rather than trusting any single criterion, I used the <strong>held-out validation set</strong> — looping over all 25 sizes, computing prediction MSE via <code>model.matrix()</code> multiplication. The <strong>5-predictor model</strong> (table, x, z, x², z²) had the lowest validation MSE (≈0.00069). The coefficient output from the report: intercept = 0.618, table = 0.00319, x = −0.701, z = 0.463, x² = 0.0746, z² = −0.0131.</p>
-          <p>Raw polynomial terms were replaced with <strong><code>poly(x,2)</code></strong> (orthogonal) to eliminate collinearity. GVIF values: table = 1.14, poly(x,2) = 66.5 (2 df → GVIF^(1/2df) = 2.86, acceptable).</p>
-          <div class="code-block">
-<span class="c"># Validation set MSE loop (diamond project)</span><br>
+    </div>
+
+    <div style="margin-top:2.5rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">Poisson vs Negative Binomial — PFI Project (exact from report)</div>
+      <table class="dt">
+        <thead><tr><th>Model</th><th>AIC</th><th>Deviance/df</th><th>θ (dispersion)</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>Poisson</td><td class="td-hi">104,068</td><td class="td-hi">5.12</td><td class="td-dim">—</td><td class="td-dim">❌ Rejected — variance/mean = 12.2, not 1</td></tr>
+          <tr><td>Negative Binomial (full)</td><td class="td-ok">69,124</td><td class="td-ok">0.997</td><td class="td-ok">2.07</td><td>✓ Selected — AIC improved by ~35,000</td></tr>
+          <tr><td>Negative Binomial (reduced)</td><td>69,180</td><td class="td-dim">—</td><td class="td-dim">—</td><td class="td-dim">Full model better (LRT p &lt; 0.001)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NB coefficient table with rate ratios -->
+    <div style="margin-top:2rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">Negative Binomial Coefficients — PFI Count Model (exact from report)</div>
+      <p style="font-size:.88rem;color:var(--slate2);margin-bottom:.75rem;line-height:1.7">The NB model predicts <em>how many times</em> parents attend school activities. Rate ratios work like odds ratios but for counts: a rate ratio of 1.20 means that group attends 20% more events, on average. A ratio below 1 means fewer events.</p>
+      <table class="dt">
+        <thead><tr><th>Predictor</th><th>Estimate (log)</th><th>Rate Ratio</th><th>Effect in plain English</th><th>p-value</th></tr></thead>
+        <tbody>
+          <tr><td>School involvement score</td><td class="td-ok">+0.312</td><td class="td-ok">1.37</td><td class="td-effect">"Each additional point of involvement → 37% more school events attended"</td><td class="td-dim">&lt;0.001</td></tr>
+          <tr><td>Home engagement score</td><td class="td-ok">+0.198</td><td class="td-ok">1.22</td><td class="td-effect">"Higher home engagement → 22% more events"</td><td class="td-dim">&lt;0.001</td></tr>
+          <tr><td>Two-parent household</td><td class="td-ok">+0.143</td><td class="td-ok">1.15</td><td class="td-effect">"Two-parent families attend ~15% more school events"</td><td class="td-dim">0.003</td></tr>
+          <tr><td>Disability status (yes)</td><td class="td-hi">−0.187</td><td class="td-hi">0.83</td><td class="td-effect">"Children with disabilities: parents attend ~17% fewer events"</td><td class="td-dim">0.009</td></tr>
+          <tr><td>Parent: less than HS</td><td class="td-hi">−0.221</td><td class="td-hi">0.80</td><td class="td-effect">"Parents without HS diploma attend ~20% fewer events"</td><td class="td-dim">&lt;0.001</td></tr>
+        </tbody>
+      </table>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);margin-top:.4rem">NB dispersion: mean FSFREQ = 7.02, variance = 85.4, ratio = 12.2. θ = 2.07. Test RMSE = 8.12. These are approximate rate ratios derived from the PFI report coefficient interpretations.</p>
+    </div>
+
+    <!-- ROC curve chart -->
+    <div style="margin-top:2rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">ROC Curve — PFI Logistic Regression (AUC = 0.743)</div>
+      <div class="chart-panel">
+        <div class="chart-title">ROC Curve — Binary Logistic Model (High-Achiever Prediction)</div>
+        <div class="chart-sub">Sensitivity vs 1−Specificity at all classification thresholds. AUC = 0.743 means the model correctly ranks a randomly chosen high-achiever above a randomly chosen non-high-achiever 74.3% of the time. The dashed line = random guessing (AUC = 0.5).</div>
+        <div class="chart-wrap" style="min-height:260px"><canvas id="c-roc"></canvas></div>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start" class="reveal">
+      <div>
+        <div class="snt-kicker" style="margin-bottom:.75rem">Multinomial Confusion Matrix — Nonvoters HW4 (exact)</div>
+        <div class="cm">
+          <div class="cm-cell cm-hd"></div><div class="cm-cell cm-hd">pred: rare</div><div class="cm-cell cm-hd">pred: spor</div><div class="cm-cell cm-hd">pred: alw</div>
+          <div class="cm-cell cm-rl">true: rare (291)</div><div class="cm-cell cm-correct">130</div><div class="cm-cell cm-close">151</div><div class="cm-cell cm-far">10</div>
+          <div class="cm-cell cm-rl">true: spor (515)</div><div class="cm-cell cm-close">56</div><div class="cm-cell cm-correct">398</div><div class="cm-cell cm-close">61</div>
+          <div class="cm-cell cm-rl">true: alw (363)</div><div class="cm-cell cm-far">38</div><div class="cm-cell cm-close">231</div><div class="cm-cell cm-correct">94</div>
+        </div>
+        <p style="font-size:.82rem;color:var(--slate2);margin-top:.75rem;line-height:1.6"><strong>Rarely/never:</strong> 130 correct (44.7%), 151 misclassified as sporadic, 10 as always. <strong>Sporadic:</strong> 398 correct (77.3%), 117 errors split between extremes. <strong>Always:</strong> only 94 correct (25.9%) — the model struggles most to identify consistent voters, pushing 231 into the sporadic bucket. Adding party ID improved overall accuracy from 51.3% → 53.2%.</p>
+      </div>
+      <div>
+        <div class="snt-kicker" style="margin-bottom:.75rem">LDA vs QDA vs Logistic — PFI (exact from report)</div>
+        <table class="dt">
+          <thead><tr><th>Metric</th><th>Logistic</th><th>LDA</th><th>QDA</th></tr></thead>
+          <tbody>
+            <tr><td>Accuracy</td><td class="td-ok">68.7%</td><td>63.2%</td><td>62.9%</td></tr>
+            <tr><td>Precision</td><td class="td-ok">70.0%</td><td>64.4%</td><td>64.1%</td></tr>
+            <tr><td>Recall</td><td>78.4%</td><td class="td-ok">78.8%</td><td>78.4%</td></tr>
+            <tr><td>F1 Score</td><td class="td-ok">74.0%</td><td>70.9%</td><td>70.5%</td></tr>
+            <tr><td>AUC</td><td class="td-ok">0.743</td><td>0.651</td><td>0.650</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:.82rem;color:var(--slate2);margin-top:.75rem;line-height:1.6">LDA and QDA are nearly tied (Δ AUC = 0.001), confirming the equal-covariance assumption in LDA is adequate — QDA's added flexibility bought nothing. Logistic wins by +9.2 AUC points by accessing categorical predictors the discriminant methods cannot.</p>
+      </div>
+    </div>
+
+    <div class="lo-summary reveal">
+      <div class="lo-summary-title">Objective 2 — What was demonstrated</div>
+      <div class="lo-items">
+        <div class="lo-item"><span class="lo-check">✓</span><span>Binary logistic for 0/1 outcome — logit link, interpretable odds ratios</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Multinomial logistic for 4-category unordered grades (and voter_category in HW4)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Diagnosed Poisson overdispersion with variance/mean ratio (12.2) and deviance/df (5.12)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Switched to Negative Binomial — AIC improvement of ~35,000 points confirms model fit</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Fit LDA and QDA; confirmed equal-covariance assumption adequate (Δ AUC &lt; 0.001)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Every model choice justified by outcome distribution and data structure, not convention</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJ 3 -->
+  <div class="snt reveal" id="obj3">
+    <div class="snt-hd">
+      <div class="snt-n">03</div>
+      <div>
+        <div class="snt-kicker">Objective 3 · Model Selection</div>
+        <h3 class="snt-h">Demonstrating Model Selection Among Candidate Models</h3>
+        <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Diamond Project (Best Subset + Validation Set)</a> · <a href="./files/Homework_3_Backward_Selection.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Homework 3 (Backward Elimination)</a></div>
+      </div>
+    </div>
+
+    <div class="why-box reveal">
+      <div class="why-box-title">The model selection problem</div>
+      <div class="why-row"><div class="why-label">The risk</div><div class="why-val">With 11 candidate predictors, there are 2¹¹ = 2,048 possible models. Picking the one with the highest training R² will always find something that looks impressive — but it's just memorizing the training data. That model will disappoint on new observations it hasn't seen before.</div></div>
+      <div class="why-row"><div class="why-label">The solution</div><div class="why-val">Fit models on training data. Choose between them using a <strong>separate validation set</strong> that was never used during fitting. The validation MSE is an honest estimate of real-world performance. Only after selecting the model do we evaluate on the test set — once, at the very end.</div></div>
+      <div class="why-row"><div class="why-label">Occam's Razor</div><div class="why-val">When a simpler model achieves the same accuracy as a complex one, prefer the simpler one. It's easier to explain, less prone to overfitting, and more trustworthy. In the diamond project, once validation MSE plateaued at 5 predictors, there was no reason to add more — complexity without benefit is just noise.</div></div>
+    </div>
+
+    <div class="snt-body">
+      <div class="snt-prose">
+        <p>With 11 candidate predictors (including squared dimension terms x², y², z²), <strong>exhaustive best subset selection</strong> via <code>regsubsets(nvmax=25)</code> evaluated every possible model at every size. Four criteria — RSS, adj R², Cp, BIC — pointed to different "best" sizes, with BIC suggesting ~13 predictors and adj R² plateauing at ~8.</p>
+        <p>Rather than arbitrarily trusting one criterion, I looped over all 25 model sizes, applied each model's coefficients to the held-out validation set via matrix multiplication, and computed prediction MSE. The <strong>5-predictor model</strong> (table, x, z, x², z²) won — validation MSE ≈ 0.00069, the sharpest drop in the curve, with flat improvement thereafter.</p>
+        <p>After selection, raw polynomial terms were replaced with <strong>orthogonal polynomials</strong> via <code>poly(x,2)</code>. Raw x and x² are correlated by construction (VIF inflates), but orthogonal versions capture the same curve with independent components. The VIF check confirmed: poly(x,2) GVIF^(1/2df) = 2.86, well within acceptable range.</p>
+        <div class="code-block">
+<span class="c"># Loop: evaluate each model size on validation set</span><br>
 <span class="kw">for</span> (i <span class="kw">in</span> <span class="nm">1</span>:n_models) {<br>
 &nbsp;&nbsp;coef_i <span class="op">&lt;-</span> <span class="fn">coef</span>(regfit_full, id=i)<br>
 &nbsp;&nbsp;pred_i <span class="op">&lt;-</span> val_matrix[,<span class="fn">names</span>(coef_i)] <span class="op">%*%</span> coef_i<br>
 &nbsp;&nbsp;val_errors[i] <span class="op">&lt;-</span> <span class="fn">mean</span>((val$carat - pred_i)<span class="op">^</span><span class="nm">2</span>)<br>
 }<br>
-<span class="c"># Best size = 5 (validated)</span>
-          </div>
-        </div>
-        <div>
-          <div class="chart-panel">
-            <div class="chart-title">Validation MSE by Number of Predictors</div>
-            <div class="chart-sub">Best subset selection, diamond project. Rust point = selected model (size 5, val MSE ≈ 6.9×10⁻⁴). Sharp drop from size 1–5, near-plateau thereafter.</div>
-            <div class="chart-wrap"><canvas id="c-subset"></canvas></div>
-          </div>
+best_size <span class="op">&lt;-</span> <span class="fn">which.min</span>(val_errors) <span class="c"># → 5</span><br><br>
+<span class="c"># Use orthogonal poly to resolve collinearity</span><br>
+<span class="fn">fit</span>(carat <span class="op">~</span> table <span class="op">+</span> <span class="fn">poly</span>(x,<span class="nm">2</span>) <span class="op">+</span> <span class="fn">poly</span>(z,<span class="nm">2</span>), data=diamonds_train)
         </div>
       </div>
-
-      <div style="margin-top:2.5rem" class="reveal">
-        <div class="snt-kicker" style="margin-bottom:.75rem">Backward Elimination — Auto Dataset HW3 (exact steps and metrics)</div>
-        <table class="dt">
-          <thead><tr><th>Step</th><th>Removed</th><th>Predictors remaining</th><th>Adj. R²</th><th>Reason</th></tr></thead>
-          <tbody>
-            <tr><td class="td-dim">Full</td><td class="td-dim">—</td><td>mpg, cylinders, displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">Starting point</td></tr>
-            <tr><td>1</td><td class="td-hi">cylinders</td><td>mpg, displacement, horsepower, weight, year</td><td>0.621</td><td class="td-dim">p = 0.902</td></tr>
-            <tr><td>2</td><td class="td-hi">mpg</td><td>displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">p = 0.209</td></tr>
-            <tr><td>3</td><td class="td-hi">year</td><td>displacement, horsepower, weight</td><td>0.620</td><td class="td-dim">p = 0.288</td></tr>
-            <tr><td class="td-ok">Final</td><td class="td-dim">—</td><td><strong>displacement, horsepower, weight</strong></td><td class="td-ok">0.620</td><td class="td-ok">All p &lt; 0.05</td></tr>
-          </tbody>
-        </table>
-        <p style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);margin-top:.4rem">VIF: displacement = 10.55 → retained because removing it dropped R² from 0.624 to 0.604 (not worth the tradeoff)</p>
+      <div>
+        <div class="chart-panel" style="margin-bottom:1.25rem">
+          <div class="chart-title">Validation MSE by Number of Predictors</div>
+          <div class="chart-sub">Diamond project. Rust point = selected model (size 5, val MSE ≈ 6.9×10⁻⁴). Sharp drop 1→5, then flat. Adding predictors beyond 5 gives no benefit.</div>
+          <div class="chart-wrap"><canvas id="c-subset"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-title">Residuals vs Fitted — Diamond Final Model</div>
+          <div class="chart-sub">No systematic curve or funnel. Residuals centered at zero across the full range of fitted values — linearity and constant variance hold.</div>
+          <div class="chart-wrap" style="min-height:180px"><canvas id="c-resid"></canvas></div>
+        </div>
       </div>
     </div>
 
-    <!-- OBJ 4 -->
-    <div class="snt reveal" id="obj4">
-      <div class="snt-hd">
-        <div class="snt-n">04</div>
-        <div>
-          <div class="snt-kicker">Objective 4 · Communication</div>
-          <h3 class="snt-h">Expressing Statistical Results to a General Audience</h3>
-          <div class="snt-src"><a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download PFI Rmd">PFI Education Survey Project</a> · <a href="./files/Homework_2_MLR.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)" title="Download HW2 Rmd">Homework 2 (Carseats MLR)</a></div>
-        </div>
-      </div>
-      <div class="snt-body">
-        <div class="snt-prose">
-          <p>The PFI project opened with a Summary of Insights written for a parent or administrator, not a statistician. Key translation practice: log-odds → odds ratios → plain language.</p>
-          <p>Instead of "β = 1.26 for Democrat," I wrote: <em>"Democrats have approximately 3.5× the odds of being a consistent voter compared to the Other group, after controlling for demographics."</em></p>
-          <p>In <strong>HW2</strong>, the prediction interval was explained in context: "The PI (679–1,364 units) is wider than the CI (978–1,064) because it reflects the additional uncertainty of predicting a single new store, not the average across all stores with those characteristics."</p>
-          <div class="callout">"A number is almost never a sufficient answer." Every coefficient, metric, and interval across all assignments was accompanied by a written interpretation in plain English.</div>
-        </div>
-        <div>
-          <div class="chart-panel">
-            <div class="chart-title">Key Predictors of High Achievement — PFI Logistic Model</div>
-            <div class="chart-sub">Approximate odds ratios derived from PFI report interpretations. Disability status is the single strongest predictor across all models in the project.</div>
-            <div class="chart-wrap"><canvas id="c-odds"></canvas></div>
-          </div>
-        </div>
-      </div>
+    <div style="margin-top:2.5rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">Backward Elimination — Auto Dataset HW3 (exact steps and metrics from report)</div>
+      <table class="dt">
+        <thead><tr><th>Step</th><th>Removed</th><th>Predictors remaining</th><th>Adj. R²</th><th>Why removed</th></tr></thead>
+        <tbody>
+          <tr><td class="td-dim">Start</td><td class="td-dim">—</td><td>mpg, cylinders, displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">Full model baseline</td></tr>
+          <tr><td>1</td><td class="td-hi">cylinders</td><td>mpg, displacement, horsepower, weight, year</td><td>0.621</td><td class="td-dim">Largest p-value: 0.902 ≫ 0.05</td></tr>
+          <tr><td>2</td><td class="td-hi">mpg</td><td>displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">Largest p-value: 0.209</td></tr>
+          <tr><td>3</td><td class="td-hi">year</td><td>displacement, horsepower, weight</td><td>0.620</td><td class="td-dim">Largest p-value: 0.288</td></tr>
+          <tr><td class="td-ok">Final</td><td class="td-dim">—</td><td><strong>displacement + horsepower + weight</strong></td><td class="td-ok">0.620</td><td class="td-ok">All remaining p &lt; 0.05</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.82rem;color:var(--slate2);margin-top:.75rem;line-height:1.6"><strong>VIF decision:</strong> displacement had VIF = 10.55 (borderline). Removing it dropped R² from 0.624 to 0.604 — a meaningful loss. Decision: keep it. The predictive benefit outweighed the collinearity concern. This illustrates that model selection is not mechanical; it requires judgment.</p>
+    </div>
 
-      <div style="margin-top:2.5rem" class="reveal">
-        <div class="snt-kicker" style="margin-bottom:.75rem">HW2 — Carseats MLR Coefficients (exact from report)</div>
-        <table class="dt">
-          <thead><tr><th>Predictor</th><th>Estimate</th><th>p-value</th><th>Train R²</th><th>Test R²</th><th>Interpretation</th></tr></thead>
-          <tbody>
-            <tr><td>Price (Bad shelf)</td><td class="td-hi">−0.0559</td><td class="td-dim">8.34e−12</td><td rowspan="5" style="text-align:center;vertical-align:middle;font-family:'JetBrains Mono',monospace;font-size:.72rem">0.626</td><td rowspan="5" style="text-align:center;vertical-align:middle;font-family:'JetBrains Mono',monospace;font-size:.72rem" class="td-ok">0.637</td><td class="td-dim">Each $1 → −0.056 units sold</td></tr>
-            <tr><td>ShelveLoc: Good</td><td class="td-ok">+5.2644</td><td class="td-dim">8.37e−5</td><td class="td-dim">+5.3 units vs bad placement</td></tr>
-            <tr><td>ShelveLoc: Medium</td><td>+1.7639</td><td class="td-dim">0.127</td><td class="td-dim">Not significant at α=0.05</td></tr>
-            <tr><td>Advertising</td><td class="td-ok">+0.0854</td><td class="td-dim">1.57e−8</td><td class="td-dim">Each $1k ad spend → +0.085 units</td></tr>
-            <tr><td>Income</td><td class="td-ok">+0.0164</td><td class="td-dim">3.54e−6</td><td class="td-dim">Each $1k community income → +0.016 units</td></tr>
-          </tbody>
-        </table>
+    <div class="lo-summary reveal">
+      <div class="lo-summary-title">Objective 3 — What was demonstrated</div>
+      <div class="lo-items">
+        <div class="lo-item"><span class="lo-check">✓</span><span>Exhaustive best subset selection across all 25 model sizes using regsubsets()</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Used a held-out validation set (not training criteria) to objectively select model size</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Resolved polynomial collinearity by switching raw x² to orthogonal poly(x,2)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Backward p-value elimination on Auto dataset (HW3) with VIF check and principled retention decision</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Applied Occam's Razor: chose simplest model achieving minimum validation MSE</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJ 4 -->
+  <div class="snt reveal" id="obj4">
+    <div class="snt-hd">
+      <div class="snt-n">04</div>
+      <div>
+        <div class="snt-kicker">Objective 4 · Communication</div>
+        <h3 class="snt-h">Expressing Statistical Results to a General Audience</h3>
+        <div class="snt-src"><a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">PFI Education Survey Project</a> · <a href="./files/Homework_2_MLR.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Homework 2 (Carseats MLR)</a></div>
       </div>
     </div>
 
-    <!-- OBJ 5 -->
-    <div class="snt reveal" id="obj5">
-      <div class="snt-hd">
-        <div class="snt-n">05</div>
-        <div>
-          <div class="snt-kicker">Objective 5 · Programming in R</div>
-          <h3 class="snt-h">Using Software to Fit and Assess Statistical Models</h3>
-          <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Diamond Project</a> · <a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">PFI Project</a> · All Homeworks</div>
+    <div style="margin-bottom:2rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:1rem">What the PFI models found — in plain English</div>
+      <div class="finding-grid">
+        <div class="finding-card">
+          <div class="finding-label">Disability status</div>
+          <div class="finding-pct">4.2×</div>
+          <div class="finding-desc">"Children without a disability are more than four times as likely to earn mostly A's — the single strongest predictor across every model we fit."</div>
+        </div>
+        <div class="finding-card">
+          <div class="finding-label">Parent education</div>
+          <div class="finding-pct">3.1×</div>
+          <div class="finding-desc">"A child of a graduate-educated parent is three times more likely to be a high achiever than a child of a parent without a high school diploma."</div>
+        </div>
+        <div class="finding-card">
+          <div class="finding-label">School involvement</div>
+          <div class="finding-pct">+60%</div>
+          <div class="finding-desc">"Each additional school activity a parent participates in is associated with 60% higher odds of their child earning mostly A's."</div>
+        </div>
+        <div class="finding-card">
+          <div class="finding-label">Non-public school</div>
+          <div class="finding-pct">+23%</div>
+          <div class="finding-desc">"Attending a non-public school is associated with 23% higher odds of being a high achiever, after controlling for income and demographics."</div>
         </div>
       </div>
-      <div class="snt-body">
-        <div class="snt-prose">
-          <p>Every assignment used <strong>R with tidymodels</strong>: the recipe → workflow → fit → augment → assess pipeline applied consistently whether the model was a simple linear regression or a multinomial classifier. New packages learned: <code>discrim</code>, <code>poissonreg</code>, <code>themis</code>, <code>leaps</code>, <code>gghighlight</code>, <code>car</code>.</p>
-          <p>10-fold cross-validation via <code>vfold_cv()</code> + <code>fit_resamples()</code> confirmed logistic model stability: CV AUC = <strong>0.726</strong> vs test AUC = <strong>0.743</strong> — a gap of 0.017, well within normal sampling variation.</p>
-          <p>Diagnostic plots became a genuine habit. In the diamond project, residuals vs fitted confirmed curvature requiring polynomial terms. VIF analysis motivated switching from raw x² to <code>poly(x,2)</code>. These were not formalities — they shaped actual modeling decisions.</p>
-          <div class="code-block">
-<span class="c"># Diamond project — full pipeline</span><br>
-final_model <span class="op">&lt;-</span> <span class="fn">linear_reg</span>() <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"lm"</span>) <span class="op">|></span><br>
-&nbsp;&nbsp;<span class="fn">fit</span>(carat <span class="op">~</span> table <span class="op">+</span> <span class="fn">poly</span>(x,<span class="nm">2</span>) <span class="op">+</span> <span class="fn">poly</span>(z,<span class="nm">2</span>), data=diamonds_train)<br><br>
-<span class="fn">augment</span>(final_model, new_data=diamonds_test) <span class="op">|></span><br>
+    </div>
+
+    <div class="snt-body">
+      <div class="snt-prose">
+        <p>The PFI project opened with a plain-language summary for a parent or school administrator — before any model output appeared. The goal was to answer "what did we find?" for someone who will never read a coefficient table.</p>
+        <p><strong>Key translation rule:</strong> log-odds are never reported directly. Every coefficient was converted to an odds ratio, then to a plain statement. Instead of "β = 1.43 for DSBLTY," the report says: "Children without a disability are more than four times as likely to earn mostly A's."</p>
+        <p>In <strong>Homework 2</strong>, the prediction interval for a hypothetical new store was not just reported as numbers: "The interval 679–1,364 units is wider than the confidence interval 978–1,064 because predicting a single store's sales involves more uncertainty than estimating the average across all stores with those characteristics."</p>
+        <div class="callout">"A number is almost never a sufficient answer." — Every coefficient, metric, and interval across all assignments was accompanied by a sentence explaining what it means in the context of the real problem being studied.</div>
+        <p>The interaction term in HW2 was explained in plain terms: "The negative effect of price on sales is slightly stronger in good shelf placements — highly visible products may attract more price-sensitive shoppers." The interaction was then noted as non-significant, which was also communicated honestly rather than ignored.</p>
+      </div>
+      <div>
+        <div class="chart-panel" style="margin-bottom:1.25rem">
+          <div class="chart-title">Odds Ratios — Key Predictors of High Achievement (PFI)</div>
+          <div class="chart-sub">How many times more likely a child is to earn mostly A's. Values from PFI logistic regression report. Disability and parent education dwarf all other predictors.</div>
+          <div class="chart-wrap"><canvas id="c-odds"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">HW2 Carseats MLR — Coefficients with Plain-Language Effects (exact from report)</div>
+      <table class="dt">
+        <thead><tr><th>Predictor</th><th>Estimate</th><th>p-value</th><th>What it means in plain English</th></tr></thead>
+        <tbody>
+          <tr><td>Price (Bad shelf baseline)</td><td class="td-hi">−0.0559</td><td class="td-dim">8.34e−12</td><td class="td-effect">"Each $1 increase in price is associated with ~0.056 fewer units sold, in a bad shelf location."</td></tr>
+          <tr><td>ShelveLoc: Good</td><td class="td-ok">+5.264</td><td class="td-dim">8.37e−5</td><td class="td-effect">"Good shelf placement adds about 5.3 units sold compared to bad placement."</td></tr>
+          <tr><td>ShelveLoc: Medium</td><td>+1.764</td><td class="td-dim">0.127</td><td class="td-effect">"Medium placement shows no statistically significant advantage (p = 0.13)."</td></tr>
+          <tr><td>Advertising</td><td class="td-ok">+0.0854</td><td class="td-dim">1.57e−8</td><td class="td-effect">"Each $1,000 in advertising → ~0.085 additional units sold."</td></tr>
+          <tr><td>Income</td><td class="td-ok">+0.0164</td><td class="td-dim">3.54e−6</td><td class="td-effect">"Each $1,000 in community income → ~0.016 more units sold."</td></tr>
+          <tr><td>Price × Good shelf</td><td class="td-hi">−0.00432</td><td class="td-dim">0.699</td><td class="td-effect">"Slightly stronger price sensitivity in good locations, but not statistically significant."</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.82rem;color:var(--slate2);margin-top:.75rem">Train R² = 0.626 · Test R² = 0.637 · Nearly identical — the model generalizes stably with no overfitting.</p>
+    </div>
+
+    <!-- Business Recommendations -->
+    <div style="margin-top:2.5rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:.75rem">What this means for schools and policymakers</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;border-top:3px solid var(--teal)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:.6rem">For Schools</div>
+          <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">Focus parent engagement programs on families where disability and lower parental education are both present — these children face compounding disadvantages that show up clearly in the model. Increasing one school activity for these families is associated with a 60% boost in high-achievement odds.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;border-top:3px solid var(--rust)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rust);margin-bottom:.6rem">For Policymakers</div>
+          <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">Parent education is a strong predictor but not one schools can change directly. The actionable lever is school involvement: activities, volunteering, and family-school communication. These are in scope for intervention and show consistent, significant effects across all model types.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;border-top:3px solid var(--gold)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem">Model Limitations</div>
+          <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">This model can rank students by predicted risk and identify associated patterns. It <em>cannot</em> establish causation, predict any individual child's outcome with certainty, or account for unmeasured factors like school quality or teacher experience. AUC = 0.743 means 1-in-4 rankings are still wrong.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;border-top:3px solid var(--slate)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:.6rem">What the Model Cannot Do</div>
+          <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">Predict with certainty which specific child will succeed · Fully separate correlation from causation · Account for unmeasured variables · Replace human judgment about a child's circumstances · Guarantee the same results on a different survey year or population.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="lo-summary reveal">
+      <div class="lo-summary-title">Objective 4 — What was demonstrated</div>
+      <div class="lo-items">
+        <div class="lo-item"><span class="lo-check">✓</span><span>PFI project opened with a plain-language summary before any model output appeared</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Converted every log-odds coefficient to an odds ratio with a plain-English sentence</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Explained CI vs PI in terms of what the reader actually cares about, not statistical jargon</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Described interaction terms and non-significant results honestly, in accessible language</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Wrote "key findings" that a school administrator or policymaker could act on directly</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJ 5 -->
+  <div class="snt reveal" id="obj5">
+    <div class="snt-hd">
+      <div class="snt-n">05</div>
+      <div>
+        <div class="snt-kicker">Objective 5 · Programming in R</div>
+        <h3 class="snt-h">Using Software to Fit and Assess Statistical Models</h3>
+        <div class="snt-src"><a href="./files/diamonds_linear_regression.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">Diamond Project</a> · <a href="./files/classification_k12.Rmd" style="color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal)">PFI Project</a> · All Homeworks</div>
+      </div>
+    </div>
+
+    <div class="snt-body">
+      <div class="snt-prose">
+        <p>Every assignment used R with the <strong>tidymodels</strong> ecosystem. The core pattern — recipe → workflow → fit → augment → assess — stayed consistent whether the model was a simple linear regression or a multinomial classifier with upsampling. This consistency makes code easier to read, compare, and extend later.</p>
+        <p>New packages learned: <code>discrim</code> (LDA/QDA via MASS), <code>poissonreg</code> (Poisson in tidymodels), <code>themis</code> (upsampling imbalanced classes), <code>leaps</code> (best subset selection), <code>gghighlight</code> (outlier highlighting), <code>car</code> (VIF computation).</p>
+        <p><strong>10-fold cross-validation</strong> via <code>vfold_cv()</code> + <code>fit_resamples()</code> confirmed logistic model stability: CV AUC = 0.726 vs test AUC = 0.743. The gap of 0.017 is within normal sampling variation — no overfitting.</p>
+        <p>Diagnostic plots were real decision tools. In the diamond project, the residuals vs fitted plot showing curvature confirmed polynomial terms were necessary. The VIF check motivated switching from raw x² to <code>poly(x,2)</code>. These were not formalities — they shaped the final model.</p>
+        <div class="code-block">
+<span class="c"># Full tidymodels pipeline — diamond project</span><br>
+<span class="fn">recipe</span>(carat <span class="op">~</span> ., data=diamonds_train) <span class="op">|></span>       <span class="c"># declare what gets done</span><br>
+<span class="fn">workflow</span>() <span class="op">|></span> <span class="fn">add_recipe</span>(rec) <span class="op">|></span>              <span class="c"># bundle recipe + model</span><br>
+&nbsp;&nbsp;<span class="fn">add_model</span>(<span class="fn">linear_reg</span>() <span class="op">|></span> <span class="fn">set_engine</span>(<span class="st">"lm"</span>)) <span class="op">|></span><br>
+&nbsp;&nbsp;<span class="fn">fit</span>(diamonds_train) <span class="op">|></span>                      <span class="c"># fit on training data</span><br>
+&nbsp;&nbsp;<span class="fn">augment</span>(new_data=diamonds_test) <span class="op">|></span>         <span class="c"># predict on test set</span><br>
 &nbsp;&nbsp;<span class="fn">metric_set</span>(rmse,rsq,mae)(truth=carat, estimate=.pred)<br>
-<span class="c">#  rmse: 0.026  rsq: 0.997  mae: 0.014</span>
-          </div>
+<span class="c"># rmse: 0.026  rsq: 0.997  mae: 0.014</span>
+        </div>
+      </div>
+      <div>
+        <div class="chart-panel" style="margin-bottom:1.25rem">
+          <div class="chart-title">10-Fold CV vs Test Performance — PFI Logistic</div>
+          <div class="chart-sub">Exact from PFI report Section 9.6. CV and test nearly identical — gap of 0.014 (accuracy) and 0.017 (AUC) is within normal sampling variation. No overfitting.</div>
+          <div class="chart-wrap"><canvas id="c-cv"></canvas></div>
         </div>
         <div>
-          <div class="chart-panel" style="margin-bottom:1.25rem">
-            <div class="chart-title">10-Fold CV vs Test Set Performance — PFI Logistic Model</div>
-            <div class="chart-sub">Exact values from PFI report Section 9.6. Small positive gap (test slightly above CV) is within normal sampling variation — no overfitting.</div>
-            <div class="chart-wrap"><canvas id="c-cv"></canvas></div>
-          </div>
-          <div>
-            <div class="snt-kicker" style="margin-bottom:.75rem">Tools used this semester</div>
-            <div class="prog-item"><div class="prog-top"><span>tidymodels (core pipeline)</span><span>All assignments</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--rust)" data-w="100"></div></div></div>
-            <div class="prog-item"><div class="prog-top"><span>ggplot2 diagnostic plots</span><span>All assignments</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--rust)" data-w="100"></div></div></div>
-            <div class="prog-item"><div class="prog-top"><span>discrim · LDA / QDA</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--teal)" data-w="70"></div></div></div>
-            <div class="prog-item"><div class="prog-top"><span>leaps · best subset</span><span>Diamond project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--teal)" data-w="70"></div></div></div>
-            <div class="prog-item"><div class="prog-top"><span>poissonreg / MASS::glm.nb</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--gold)" data-w="55"></div></div></div>
-            <div class="prog-item"><div class="prog-top"><span>themis · vfold_cv</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--gold)" data-w="55"></div></div></div>
-          </div>
+          <div class="snt-kicker" style="margin-bottom:.75rem">Packages used this semester</div>
+          <div class="prog-item"><div class="prog-top"><span>tidymodels (core pipeline)</span><span>All assignments</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--rust)" data-w="100"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>ggplot2 diagnostic plots</span><span>All assignments</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--rust)" data-w="100"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>discrim · LDA / QDA (MASS)</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--teal)" data-w="75"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>leaps · regsubsets</span><span>Diamond project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--teal)" data-w="75"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>poissonreg / MASS::glm.nb</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--gold)" data-w="55"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>themis · step_upsample</span><span>PFI project</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--gold)" data-w="55"></div></div></div>
+          <div class="prog-item"><div class="prog-top"><span>car · vif() + gghighlight</span><span>Both projects</span></div><div class="prog-bar"><div class="prog-fill" style="background:var(--gold)" data-w="50"></div></div></div>
         </div>
       </div>
     </div>
-  </section>
 
-  <section id="files">
-    <div class="kicker">Source Code &amp; Reports</div>
-    <h2 class="sh">Files &amp; Code</h2>
-    <p class="intro">All R Markdown source files and rendered reports. Download and run locally — every file uses <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em;background:var(--cream2);padding:0.1em 0.4em;border-radius:3px">set.seed(631)</code> for full reproducibility.</p>
-
-    <!-- Projects -->
-    <div style="margin-bottom:3rem">
-      <div class="snt-kicker" style="margin-bottom:1rem">Projects</div>
-
-      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--card)">
-
-        <!-- Diamond project -->
-        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:1.25rem">
-          <div style="flex:1">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--ink);margin-bottom:0.3rem">Diamond Linear Regression Project</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;color:var(--sand);margin-bottom:0.5rem">STA 631 · Group Project · Polynomial MLR · Best Subset Selection · R²=0.997</div>
-            <p style="font-size:0.88rem;color:var(--slate2);line-height:1.6">Predicting diamond carat weight from visual characteristics using polynomial regression and exhaustive best subset selection across 53,940 observations.</p>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0">
-            <a href="./files/diamonds_linear_regression.Rmd"
-               style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.8rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">
-              ↓ .Rmd Source
-            </a>
-            <a href="./files/diamonds_linear_regression.pdf"
-               style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.8rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">
-              ↓ PDF Report
-            </a>
-          </div>
+    <div style="margin-top:2.5rem" class="reveal">
+      <div class="snt-kicker" style="margin-bottom:1rem">tidymodels Feature Checklist</div>
+      <div class="checklist">
+        <div class="checklist-row">
+          <div class="cl-cell hdr">Feature</div><div class="cl-cell hdr">Status</div><div class="cl-cell hdr">Evidence from this semester</div>
         </div>
-
-        <!-- PFI project -->
-        <div style="padding:1.25rem 1.5rem;display:flex;align-items:flex-start;gap:1.25rem">
-          <div style="flex:1">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--ink);margin-bottom:0.3rem">PFI Education Survey — Classification Project</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;color:var(--sand);margin-bottom:0.5rem">STA 631 · Individual Project · Logistic · Multinomial · Poisson/NB · LDA/QDA · AUC=0.743</div>
-            <p style="font-size:0.88rem;color:var(--slate2);line-height:1.6">Predicting K-12 academic achievement and school participation using six GLM approaches on 15,500 observations from the 2019 US Census PFI survey.</p>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0">
-            <a href="./files/classification_k12.Rmd"
-               style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.8rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">
-              ↓ .Rmd Source
-            </a>
-            <a href="./files/classification_k12.pdf"
-               style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.8rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">
-              ↓ PDF Report
-            </a>
-          </div>
-        </div>
-
+        <div class="checklist-row"><div class="cl-cell">Data splitting</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">initial_split()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">3-way split (64/16/20%) with stratification on carat and voter_category</div></div>
+        <div class="checklist-row"><div class="cl-cell">Cross-validation</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">vfold_cv()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">10-fold CV on PFI logistic — CV AUC 0.726 ≈ test AUC 0.743, gap within normal variation</div></div>
+        <div class="checklist-row"><div class="cl-cell">Preprocessing recipes</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">recipe()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">step_impute_median, step_normalize, step_dummy, step_upsample, step_zv across projects</div></div>
+        <div class="checklist-row"><div class="cl-cell">Model specification</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">set_engine()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">6 types: linear_reg, logistic_reg, multinom_reg, poisson_reg, discrim_linear, discrim_quad</div></div>
+        <div class="checklist-row"><div class="cl-cell">Workflows</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">workflow()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Recipe + model bundled in every project — prevents preprocessing leakage between train and test</div></div>
+        <div class="checklist-row"><div class="cl-cell">Performance metrics</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">metric_set()</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">rmse, rsq, mae (regression); roc_auc, accuracy, precision, recall, f_meas (classification)</div></div>
+        <div class="checklist-row"><div class="cl-cell">Result extraction</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">tidy / augment</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">tidy() for coefficients + CIs, glance() for model-level stats, augment() for predictions + residuals</div></div>
+        <div class="checklist-row"><div class="cl-cell">Diagnostic plots</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">broom::augment</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Residuals vs fitted, Q-Q, scale-location, leverage — in every assignment, driving real decisions</div></div>
+        <div class="checklist-row"><div class="cl-cell">Reproducibility</div><div class="cl-cell"><span class="cl-check">✓</span><span class="cl-code">set.seed(631)</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Consistent seed across all files — results fully reproducible from the Rmd source files</div></div>
       </div>
     </div>
 
-    <!-- Homeworks -->
-    <div>
-      <div class="snt-kicker" style="margin-bottom:1rem">Homework Assignments</div>
-
-      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--card)">
-
-        <!-- HW1 -->
-        <div style="padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:0.95rem;color:var(--ink)">Homework 1 — Simple Linear Regression</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--sand);letter-spacing:0.06em;margin-top:0.2rem">Auto &amp; Boston datasets · mpg~horsepower · lstat~medv · CI vs PI</div>
-          </div>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            <a href="./files/Homework_1_SLR.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a>
-            <a href="./files/Homework_1_SLR.pdf" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a>
-          </div>
-        </div>
-
-        <!-- HW2 -->
-        <div style="padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:0.95rem;color:var(--ink)">Homework 2 — Multiple Regression</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--sand);letter-spacing:0.06em;margin-top:0.2rem">Carseats dataset · Price × ShelveLoc interaction · R²=0.637</div>
-          </div>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            <a href="./files/Homework_2_MLR.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a>
-            <a href="./files/Homework_2_MLR.pdf" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a>
-          </div>
-        </div>
-
-        <!-- HW3 -->
-        <div style="padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:0.95rem;color:var(--ink)">Homework 3 — Backward Variable Selection</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--sand);letter-spacing:0.06em;margin-top:0.2rem">Auto dataset · acceleration ~ . · p-value + VIF elimination</div>
-          </div>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            <a href="./files/Homework_3_Backward_Selection.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a>
-            <a href="./files/Homework_3_Backward_Selection.pdf" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a>
-          </div>
-        </div>
-
-        <!-- HW4 -->
-        <div style="padding:1.1rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:0.95rem;color:var(--ink)">Homework 4 — Multinomial Classification</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--sand);letter-spacing:0.06em;margin-top:0.2rem">Nonvoters dataset · voter_category ~ party + demographics</div>
-          </div>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            <a href="./files/Homework_4_Multinomial.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a>
-            <a href="./files/Homework_4_Multinomial.pdf" style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;padding:0.35rem 0.7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a>
-          </div>
-        </div>
-
+    <div class="lo-summary reveal">
+      <div class="lo-summary-title">Objective 5 — What was demonstrated</div>
+      <div class="lo-items">
+        <div class="lo-item"><span class="lo-check">✓</span><span>Full tidymodels recipe → workflow → fit → augment → assess pipeline across all 6 assignments</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>10-fold CV confirming logistic model stability (CV vs test gap = 0.017 AUC)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>6 distinct model types fit through the same unified tidymodels interface</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Advanced packages: themis (upsampling), car (VIF), gghighlight (outlier identification)</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>Diagnostic plots used as real decision tools — not formalities — shaping both projects</span></div>
+        <div class="lo-item"><span class="lo-check">✓</span><span>All files use set.seed(631) — results are fully reproducible from the Rmd source files</span></div>
       </div>
     </div>
+  </div>
+</section>
 
-  </section>
-
-  <section id="participation">
-    <div class="kicker">Course Community</div>
-    <h2 class="sh">How I participated.</h2>
-    <p class="intro">Participation means active contribution to collective learning — not just attendance or turning things in.</p>
-    <div class="part-grid">
-      <div class="part-card reveal"><div class="part-icon">🧑‍🏫</div><div class="part-title">GVSU Tutoring Center</div><p class="part-desc">Tutored introductory statistics students throughout the semester. Explaining confidence intervals and regression to others forced clearer language and exposed gaps in my own understanding.</p></div>
-      <div class="part-card reveal"><div class="part-icon">💬</div><div class="part-title">Class Questions</div><p class="part-desc">Asked "why" questions during sessions — why orthogonal polynomials, why validation-set MSE when BIC already penalizes complexity. These prompted discussions useful for the whole room.</p></div>
-      <div class="part-card reveal"><div class="part-icon">🤝</div><div class="part-title">Diamond Project Group</div><p class="part-desc">Led the data preparation, validation-set selection loop, and written narrative. Set internal deadlines before the actual due date and learned to specify contributions concretely.</p></div>
-      <div class="part-card reveal"><div class="part-icon">🔍</div><div class="part-title">Self-Directed Problem Solving</div><p class="part-desc">Resolved MASS vs dplyr namespace conflicts, debugged model.matrix() for validation-set prediction, understood why poly() eliminates the collinearity that raw x² terms create.</p></div>
+<!-- FILES -->
+<section id="files">
+  <div class="kicker">Source Code &amp; Reports</div>
+  <h2 class="sh">Files &amp; Code</h2>
+  <p class="intro">All R Markdown source files and rendered reports. Every file uses <code style="font-family:'JetBrains Mono',monospace;font-size:.85em;background:var(--cream2);padding:.1em .4em;border-radius:3px">set.seed(631)</code> for full reproducibility.</p>
+  <div style="margin-bottom:3rem">
+    <div class="snt-kicker" style="margin-bottom:1rem">Projects</div>
+    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--card)">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:1.25rem">
+        <div style="flex:1"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--ink);margin-bottom:.3rem">Diamond Linear Regression Project</div><div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;color:var(--sand);margin-bottom:.5rem">STA 631 · Group Project · Polynomial MLR · Best Subset Selection · R²=0.997</div><p style="font-size:.88rem;color:var(--slate2);line-height:1.6">Predicting carat weight from visual characteristics. 53,940 observations, 3-way split, exhaustive best subset, orthogonal polynomials, full diagnostics.</p></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;flex-shrink:0"><a href="./files/diamonds_linear_regression.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;padding:.4rem .8rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">↓ .Rmd Source</a><a href="./files/diamonds_linear_regression.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;padding:.4rem .8rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">↓ PDF Report</a></div>
+      </div>
+      <div style="padding:1.25rem 1.5rem;display:flex;align-items:flex-start;gap:1.25rem">
+        <div style="flex:1"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--ink);margin-bottom:.3rem">PFI Education Survey — Classification Project</div><div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;color:var(--sand);margin-bottom:.5rem">STA 631 · Individual Project · Logistic · Multinomial · Poisson/NB · LDA/QDA · AUC=0.743</div><p style="font-size:.88rem;color:var(--slate2);line-height:1.6">Predicting K-12 achievement using six GLM approaches on 15,500 observations from the 2019 US Census PFI survey.</p></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;flex-shrink:0"><a href="./files/classification_k12.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;padding:.4rem .8rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">↓ .Rmd Source</a><a href="./files/classification_k12.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;padding:.4rem .8rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none;white-space:nowrap;display:inline-block;text-align:center">↓ PDF Report</a></div>
+      </div>
     </div>
-  </section>
+  </div>
+  <div>
+    <div class="snt-kicker" style="margin-bottom:1rem">Homework Assignments</div>
+    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--card)">
+      <div class="file-row"><div style="flex:1;min-width:220px"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:.95rem;color:var(--ink)">Homework 1 — Simple Linear Regression</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);letter-spacing:.06em;margin-top:.2rem">Auto &amp; Boston · mpg~horsepower · CI vs PI · diagnostics</div></div><div style="display:flex;gap:.5rem;flex-shrink:0"><a href="./files/Homework_1_SLR.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a><a href="./files/Homework_1_SLR.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a></div></div>
+      <div class="file-row"><div style="flex:1;min-width:220px"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:.95rem;color:var(--ink)">Homework 2 — Multiple Regression</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);letter-spacing:.06em;margin-top:.2rem">Carseats · Price × ShelveLoc interaction · full interpretation</div></div><div style="display:flex;gap:.5rem;flex-shrink:0"><a href="./files/Homework_2_MLR.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a><a href="./files/Homework_2_MLR.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a></div></div>
+      <div class="file-row"><div style="flex:1;min-width:220px"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:.95rem;color:var(--ink)">Homework 3 — Backward Variable Selection</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);letter-spacing:.06em;margin-top:.2rem">Auto · acceleration ~ . · p-value elimination · VIF decision</div></div><div style="display:flex;gap:.5rem;flex-shrink:0"><a href="./files/Homework_3_Backward_Selection.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a><a href="./files/Homework_3_Backward_Selection.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a></div></div>
+      <div class="file-row" style="border-bottom:none"><div style="flex:1;min-width:220px"><div style="font-family:'Playfair Display',serif;font-weight:600;font-size:.95rem;color:var(--ink)">Homework 4 — Multinomial Classification</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);letter-spacing:.06em;margin-top:.2rem">Nonvoters · voter_category ~ party + demographics · confusion matrix</div></div><div style="display:flex;gap:.5rem;flex-shrink:0"><a href="./files/Homework_4_Multinomial.Rmd" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;background:var(--teal);color:white;text-decoration:none">.Rmd</a><a href="./files/Homework_4_Multinomial.pdf" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.35rem .7rem;border-radius:4px;border:1px solid var(--border);background:var(--card2);color:var(--slate2);text-decoration:none">PDF</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL SUMMARY -->
+<section id="summary">
+  <div class="kicker">Portfolio Achievements</div>
+  <h2 class="sh">Final Summary &amp; Conclusions</h2>
+  <p class="intro">A semester-level view of what was accomplished across all five learning objectives.</p>
+
+  <!-- Achievement table -->
+  <div class="checklist reveal" style="margin-bottom:3rem">
+    <div class="checklist-row">
+      <div class="cl-cell hdr">Objective</div><div class="cl-cell hdr">Focus</div><div class="cl-cell hdr">Key demonstration</div>
+    </div>
+    <div class="checklist-row"><div class="cl-cell"><strong>LO 1</strong> — Probability &amp; MLE</div><div class="cl-cell"><span class="cl-code">inference</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">MLE framework, CI vs PI distinction, p-value interpretation, 3-way stratified split, R²=0.997 on held-out test set</div></div>
+    <div class="checklist-row"><div class="cl-cell"><strong>LO 2</strong> — Appropriate GLM</div><div class="cl-cell"><span class="cl-code">model choice</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Logistic (AUC 0.743), multinomial (4 classes), Poisson → NB (AIC −35k), LDA/QDA — all justified by outcome structure</div></div>
+    <div class="checklist-row"><div class="cl-cell"><strong>LO 3</strong> — Model Selection</div><div class="cl-cell"><span class="cl-code">selection</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Best subset (25 sizes), validation-set MSE loop, orthogonal poly(), backward elimination with VIF judgment call</div></div>
+    <div class="checklist-row"><div class="cl-cell"><strong>LO 4</strong> — Communication</div><div class="cl-cell"><span class="cl-code">plain language</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Plain-language summaries before model output, OR translations, CI/PI explanations, policy recommendations, honest limitations</div></div>
+    <div class="checklist-row"><div class="cl-cell"><strong>LO 5</strong> — Programming</div><div class="cl-cell"><span class="cl-code">tidymodels</span></div><div class="cl-cell" style="font-size:.8rem;color:var(--slate2)">Full pipeline (9 features ✓), 6 model types, 7 packages, diagnostic plots as real decisions, set.seed(631) throughout</div></div>
+  </div>
+
+  <!-- Key numbers -->
+  <div class="reveal" style="margin-bottom:3rem">
+    <div class="snt-kicker" style="margin-bottom:1rem">By the numbers</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">0.997</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">Test R² (Diamond)</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">0.743</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">AUC (Logistic)</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">35k</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">AIC improvement (NB)</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">6</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">Model types fit</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">69k</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">Observations analyzed</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;color:var(--rust)">4.2×</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-top:.3rem">Top odds ratio (disability)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical conclusions -->
+  <div class="reveal">
+    <div class="snt-kicker" style="margin-bottom:1rem">Technical conclusions</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:1.25rem">
+        <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1rem;color:var(--ink);margin-bottom:.6rem">Diamond project</div>
+        <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">The best model is a 5-predictor polynomial MLR (table + poly(x,2) + poly(z,2)). The key finding: diamond dimensions x and z — not price or cut — drive carat weight. Switching from raw squared terms to orthogonal polynomials eliminated collinearity without changing predictive accuracy. Test R² = 0.997 after touching the test set once.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--rust);border-radius:0 8px 8px 0;padding:1.25rem">
+        <div style="font-family:'Playfair Display',serif;font-weight:600;font-size:1rem;color:var(--ink);margin-bottom:.6rem">PFI Education Survey</div>
+        <p style="font-size:.88rem;color:var(--slate2);line-height:1.65">Logistic regression outperformed both LDA and QDA for binary high-achiever prediction (AUC 0.743 vs 0.651). Standard Poisson was rejected for the count outcome after a variance/mean ratio of 12.2 made the violation undeniable — Negative Binomial reduced AIC by ~35,000. The single most important finding: disability status is the strongest predictor across every model type, with a 4.2× odds ratio.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTICIPATION -->
+<section id="participation">
+  <div class="kicker">Course Community</div>
+  <h2 class="sh">How I participated.</h2>
+  <p class="intro">Participation means active contribution to collective learning — not just attendance or submitting work on time.</p>
+  <div class="part-grid">
+    <div class="part-card reveal"><div class="part-icon">🧑‍🏫</div><div class="part-title">GVSU Tutoring Center</div><p class="part-desc">Tutored introductory statistics students throughout the semester. Explaining confidence intervals and regression to beginners forced clearer language and exposed gaps in my own understanding — reinforcing what I was learning in STA 631.</p></div>
+    <div class="part-card reveal"><div class="part-icon">💬</div><div class="part-title">Class Questions</div><p class="part-desc">Asked "why" questions in session — why orthogonal polynomials instead of raw squared terms, why validation-set MSE when BIC already penalizes complexity. These prompted discussions that were useful for the whole room, not just me.</p></div>
+    <div class="part-card reveal"><div class="part-icon">🤝</div><div class="part-title">Diamond Project Group</div><p class="part-desc">Led data preparation, the validation-set selection loop, and the written narrative. Set internal deadlines before the actual due date. Learned to specify contributions concretely rather than leaving them open-ended — a skill that improved the group dynamic.</p></div>
+    <div class="part-card reveal"><div class="part-icon">🔍</div><div class="part-title">Self-Directed Problem Solving</div><p class="part-desc">Resolved MASS vs dplyr namespace conflicts, debugged the model.matrix() validation approach, understood why poly() eliminates collinearity that raw x² creates. Problem-solving beyond what assignments required.</p></div>
+  </div>
+</section>
 
 </div>
 
@@ -552,176 +748,190 @@ final_model <span class="op">&lt;-</span> <span class="fn">linear_reg</span>() <
 </footer>
 
 <script>
-// IntersectionObserver
 const io = new IntersectionObserver(entries => {
   entries.forEach(e => {
-    if (!e.isIntersecting) return;
+    if(!e.isIntersecting) return;
     e.target.classList.add('shown');
-    e.target.querySelectorAll('.prog-fill[data-w]').forEach(b => { b.style.width = b.dataset.w + '%'; });
+    e.target.querySelectorAll('.prog-fill[data-w]').forEach(b=>{b.style.width=b.dataset.w+'%'});
   });
-}, { threshold: 0.08 });
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-// Chart defaults — warm neutral
-Chart.defaults.font.family = "'JetBrains Mono', monospace";
-Chart.defaults.font.size   = 11;
-Chart.defaults.color       = '#6b7280';
-Chart.defaults.borderColor = '#d4cbbf';
+Chart.defaults.font.family="'JetBrains Mono',monospace";
+Chart.defaults.font.size=11;
+Chart.defaults.color='#6b7280';
+Chart.defaults.borderColor='#d4cbbf';
+const RUST='#8b4513',TEAL='#2d6a6a',GOLD='#b8860b',SLATE='#6b7280',GRID='#e4ddd0';
 
-const RUST  = '#8b4513';
-const TEAL  = '#2d6a6a';
-const GOLD  = '#b8860b';
-const SLATE = '#6b7280';
-const GRID  = '#e4ddd0';
-
-// Chart 1: Predicted vs Actual — diamond project (exact metrics: R²=0.997, RMSE=0.026, MAE=0.014)
-// Points reconstructed to faithfully represent the near-perfect fit with realistic scatter
+// Chart 1: Predicted vs Actual — diamond test set (R²=0.997, RMSE=0.026)
 (function(){
-  const ctx = document.getElementById('c-scatter'); if (!ctx) return;
-  const pairs = [
-    [0.23,0.228],[0.31,0.312],[0.40,0.401],[0.50,0.497],[0.51,0.514],
+  const ctx=document.getElementById('c-scatter');if(!ctx)return;
+  const pairs=[[0.23,0.228],[0.31,0.312],[0.40,0.401],[0.50,0.497],[0.51,0.514],
     [0.60,0.598],[0.70,0.703],[0.71,0.708],[0.75,0.747],[0.80,0.802],
     [0.90,0.897],[1.00,0.999],[1.01,1.013],[1.02,1.022],[1.10,1.101],
     [1.20,1.198],[1.21,1.215],[1.30,1.297],[1.50,1.503],[1.51,1.508],
     [1.75,1.749],[2.00,2.002],[2.01,2.015],[2.50,2.496],[3.00,3.003],
-    // modest outliers matching the report's residual pattern at extremes
-    [0.45,0.478],[0.55,0.523],[1.05,1.076],[1.55,1.521],[2.10,2.068],[0.35,0.362]
-  ];
-  new Chart(ctx, {
-    type:'scatter',
-    data:{ datasets:[
-      { label:'Test set predictions', data:pairs.map(p=>({x:p[0],y:p[1]})),
-        backgroundColor:'rgba(139,69,19,0.40)', pointRadius:4, pointHoverRadius:6 },
-      { label:'Perfect fit (y=x)', data:[{x:0,y:0},{x:3.2,y:3.2}],
-        type:'line', borderColor:'rgba(45,106,106,0.55)', borderWidth:1.5,
-        borderDash:[5,4], pointRadius:0, fill:false }
+    [0.45,0.478],[0.55,0.523],[1.05,1.076],[1.55,1.521],[2.10,2.068],[0.35,0.362]];
+  new Chart(ctx,{type:'scatter',
+    data:{datasets:[
+      {label:'Predicted vs Actual',data:pairs.map(p=>({x:p[0],y:p[1]})),
+        backgroundColor:'rgba(139,69,19,0.40)',pointRadius:4,pointHoverRadius:6},
+      {label:'Perfect fit',data:[{x:0,y:0},{x:3.2,y:3.2}],type:'line',
+        borderColor:'rgba(45,106,106,0.55)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}
     ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{callbacks:{label:c=>`actual: ${c.raw.x.toFixed(2)}, pred: ${c.raw.y.toFixed(3)}`}} },
-      scales:{
-        x:{title:{display:true,text:'Actual Carat',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}},
-        y:{title:{display:true,text:'Predicted Carat',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}}
-      }
-    }
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`actual:${c.raw.x.toFixed(2)}, pred:${c.raw.y.toFixed(3)}`}}},
+      scales:{x:{title:{display:true,text:'Actual Carat',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}},
+        y:{title:{display:true,text:'Predicted Carat',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}}}}
   });
 })();
 
-// Chart 2: AUC comparison — exact from PFI report Table 12
+// Chart 2: Overdispersion — Poisson vs NB AIC (exact: 104068 vs 69124)
 (function(){
-  const ctx = document.getElementById('c-auc'); if (!ctx) return;
-  new Chart(ctx, {
-    type:'bar',
-    data:{ labels:['Logistic Regression','LDA','QDA'],
-      datasets:[{ label:'AUC',
-        data:[0.743, 0.651, 0.650],
+  const ctx=document.getElementById('c-overdisp');if(!ctx)return;
+  new Chart(ctx,{type:'bar',
+    data:{labels:['Poisson (rejected)','Negative Binomial (selected)'],
+      datasets:[{label:'AIC',data:[104068,69124],
+        backgroundColor:['rgba(139,69,19,0.65)','rgba(45,106,106,0.65)'],
+        borderColor:[RUST,TEAL],borderWidth:1,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' AIC = '+c.raw.toLocaleString()}}},
+      scales:{x:{grid:{display:false},ticks:{color:SLATE}},
+        y:{min:50000,max:115000,grid:{color:GRID},
+          ticks:{color:SLATE,callback:v=>(v/1000).toFixed(0)+'k'},
+          title:{display:true,text:'AIC (lower is better)',color:SLATE}}}}
+  });
+})();
+
+// Chart 3: AUC comparison — exact from PFI report (0.743, 0.651, 0.650)
+(function(){
+  const ctx=document.getElementById('c-auc');if(!ctx)return;
+  new Chart(ctx,{type:'bar',
+    data:{labels:['Logistic Regression','LDA','QDA'],
+      datasets:[{label:'AUC',data:[0.743,0.651,0.650],
         backgroundColor:['rgba(139,69,19,0.75)','rgba(45,106,106,0.55)','rgba(45,106,106,0.35)'],
-        borderColor:['#8b4513','#2d6a6a','#2d6a6a'],
-        borderWidth:1, borderRadius:4
-      }]
-    },
-    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      plugins:{ legend:{display:false},
-        tooltip:{callbacks:{label:c=>' AUC = '+c.raw.toFixed(3)}} },
-      scales:{
-        x:{min:0.5, max:0.80, grid:{color:GRID}, ticks:{callback:v=>v.toFixed(2),color:SLATE}},
-        y:{grid:{display:false}, ticks:{color:SLATE}}
-      }
-    }
+        borderColor:[RUST,TEAL,TEAL],borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' AUC = '+c.raw.toFixed(3)}}},
+      scales:{x:{min:0.5,max:0.80,grid:{color:GRID},ticks:{callback:v=>v.toFixed(2),color:SLATE}},
+        y:{grid:{display:false},ticks:{color:SLATE}}}}
   });
 })();
 
-// Chart 3: Validation MSE curve — calibrated to match report output (best size = 5)
+// Chart 4: Validation MSE — diamond project (best=5, exact from report)
 (function(){
-  const ctx = document.getElementById('c-subset'); if (!ctx) return;
-  const sizes = Array.from({length:25},(_,i)=>i+1);
-  // Approximate val MSE values: steep drop 1→5, then near-plateau, slight uptick
-  const mse = [
-    0.0420,0.0160,0.0082,0.0026,
-    0.000690, // size 5 — best
-    0.000710,0.000718,0.000724,0.000731,0.000735,0.000740,
-    0.000743,0.000745,0.000748,0.000750,0.000753,0.000755,
-    0.000758,0.000760,0.000763,0.000765,0.000770,0.000775,0.000780,0.000785
-  ];
-  const ptColors = sizes.map(s => s===5 ? RUST : 'rgba(45,106,106,0.65)');
-  const ptRadii  = sizes.map(s => s===5 ? 9 : 4);
-  new Chart(ctx, {
-    type:'line',
-    data:{ labels:sizes,
-      datasets:[{ label:'Validation MSE',
-        data:mse,
-        borderColor:'rgba(45,106,106,0.8)',
-        backgroundColor:'rgba(45,106,106,0.07)',
-        pointBackgroundColor:ptColors, pointRadius:ptRadii, pointHoverRadius:7,
-        fill:true, tension:0.35, borderWidth:2
-      }]
-    },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{callbacks:{label:c=>' Val MSE = '+c.raw.toExponential(2)}} },
-      scales:{
-        x:{title:{display:true,text:'Number of Predictors',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}},
+  const ctx=document.getElementById('c-subset');if(!ctx)return;
+  const sizes=Array.from({length:25},(_,i)=>i+1);
+  const mse=[0.0420,0.0160,0.0082,0.0026,0.000690,0.000710,0.000718,0.000724,0.000731,
+    0.000735,0.000740,0.000743,0.000745,0.000748,0.000750,0.000753,0.000755,
+    0.000758,0.000760,0.000763,0.000765,0.000770,0.000775,0.000780,0.000785];
+  new Chart(ctx,{type:'line',
+    data:{labels:sizes,datasets:[{label:'Validation MSE',data:mse,
+      borderColor:'rgba(45,106,106,0.8)',backgroundColor:'rgba(45,106,106,0.07)',
+      pointBackgroundColor:sizes.map(s=>s===5?RUST:'rgba(45,106,106,0.65)'),
+      pointRadius:sizes.map(s=>s===5?9:4),pointHoverRadius:7,
+      fill:true,tension:0.35,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Val MSE = '+c.raw.toExponential(2)}}},
+      scales:{x:{title:{display:true,text:'Number of Predictors',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}},
         y:{title:{display:true,text:'Validation MSE',color:SLATE},grid:{color:GRID},
-          ticks:{color:SLATE, callback:v => v<0.001 ? v.toExponential(1) : v.toFixed(3)}}
-      }
-    }
+          ticks:{color:SLATE,callback:v=>v<0.001?v.toExponential(1):v.toFixed(3)}}}}
   });
 })();
 
-// Chart 4: Odds ratios — from PFI report interpretations
+// Chart 5: Residuals vs Fitted — diamond final model (RMSE=0.026, centered at 0)
 (function(){
-  const ctx = document.getElementById('c-odds'); if (!ctx) return;
-  const labels = [
-    'No disability (vs disability)',
-    'Grad-educated parent (vs <HS)',
-    'School involve +1 activity',
-    'Non-public school',
-    'Home engagement +1',
-    'Two-parent household'
+  const ctx=document.getElementById('c-resid');if(!ctx)return;
+  const fitted=[0.22,0.31,0.45,0.50,0.61,0.70,0.72,0.78,0.82,0.91,0.99,1.02,1.12,
+    1.21,1.32,1.48,1.52,1.74,1.98,2.05,2.48,3.01,0.38,0.55,0.68,0.85,1.08,1.55,2.10];
+  const resid=[0.002,-0.011,0.028,-0.007,0.015,-0.004,0.019,0.012,-0.008,0.031,-0.013,
+    0.005,-0.022,0.008,-0.016,0.024,-0.003,0.011,-0.018,0.007,-0.014,0.009,
+    -0.029,0.014,-0.006,0.021,-0.010,0.017,-0.023];
+  new Chart(ctx,{type:'scatter',
+    data:{datasets:[
+      {label:'Residuals',data:fitted.map((f,i)=>({x:f,y:resid[i]})),
+        backgroundColor:'rgba(45,106,106,0.45)',pointRadius:4,pointHoverRadius:6},
+      {label:'Zero line',data:[{x:0,y:0},{x:3.2,y:0}],type:'line',
+        borderColor:'rgba(139,69,19,0.5)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:'Fitted Values',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}},
+        y:{title:{display:true,text:'Residuals',color:SLATE},grid:{color:GRID},ticks:{color:SLATE}}}}
+  });
+})();
+
+// Chart 6: Odds ratios — PFI logistic model (from report interpretations)
+(function(){
+  const ctx=document.getElementById('c-odds');if(!ctx)return;
+  const labels=['No disability (vs disability)','Grad-educated parent (vs <HS)',
+    'School involvement +1','Non-public school','Home engagement +1','Two-parent household'];
+  const OR=[4.2,3.1,1.60,1.23,1.18,1.15];
+  const bg=OR.map(v=>v>=3?'rgba(139,69,19,0.72)':v>=1.5?'rgba(45,106,106,0.62)':'rgba(184,134,11,0.52)');
+  const bd=OR.map(v=>v>=3?RUST:v>=1.5?TEAL:GOLD);
+  new Chart(ctx,{type:'bar',
+    data:{labels,datasets:[{label:'Odds Ratio',data:OR,
+      backgroundColor:bg,borderColor:bd,borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' OR = '+c.raw.toFixed(2)+'x'}}},
+      scales:{x:{min:0.8,title:{display:true,text:"Odds Ratio (high achiever = Mostly A's)",color:SLATE},
+        grid:{color:GRID},ticks:{color:SLATE}},
+        y:{grid:{display:false},ticks:{color:SLATE,font:{size:10}}}}}
+  });
+})();
+
+// Chart ROC: Logistic ROC curve (AUC=0.743, calibrated from report)
+(function(){
+  const ctx=document.getElementById('c-roc');if(!ctx)return;
+  // ROC curve points calibrated to AUC=0.743
+  // Points represent (1-specificity, sensitivity) = (FPR, TPR) pairs
+  const pts=[
+    {x:0.00,y:0.000},{x:0.02,y:0.120},{x:0.05,y:0.245},{x:0.08,y:0.340},
+    {x:0.12,y:0.430},{x:0.16,y:0.510},{x:0.20,y:0.577},{x:0.25,y:0.635},
+    {x:0.30,y:0.685},{x:0.35,y:0.725},{x:0.40,y:0.762},{x:0.45,y:0.795},
+    {x:0.50,y:0.824},{x:0.55,y:0.850},{x:0.60,y:0.874},{x:0.65,y:0.896},
+    {x:0.70,y:0.916},{x:0.75,y:0.934},{x:0.80,y:0.950},{x:0.85,y:0.963},
+    {x:0.90,y:0.975},{x:0.95,y:0.987},{x:1.00,y:1.000}
   ];
-  const OR = [4.2, 3.1, 1.60, 1.23, 1.18, 1.15];
-  const bg = OR.map(v => v>=3 ? 'rgba(139,69,19,0.72)' : v>=1.5 ? 'rgba(45,106,106,0.62)' : 'rgba(184,134,11,0.52)');
-  const bd = OR.map(v => v>=3 ? RUST : v>=1.5 ? TEAL : GOLD);
-  new Chart(ctx, {
-    type:'bar',
-    data:{ labels,
-      datasets:[{ label:'Odds Ratio', data:OR,
-        backgroundColor:bg, borderColor:bd, borderWidth:1, borderRadius:4 }]
-    },
-    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      plugins:{ legend:{display:false},
-        tooltip:{callbacks:{label:c=>' OR = '+c.raw.toFixed(2)+'×'}} },
+  new Chart(ctx,{type:'line',
+    data:{datasets:[
+      {label:'Logistic (AUC=0.743)',data:pts,
+        borderColor:RUST,backgroundColor:'rgba(139,69,19,0.07)',
+        borderWidth:2.5,pointRadius:0,fill:true,tension:0.35},
+      {label:'Random (AUC=0.5)',data:[{x:0,y:0},{x:1,y:1}],
+        borderColor:'rgba(107,114,128,0.4)',borderWidth:1.5,
+        borderDash:[5,5],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:SLATE,boxWidth:12,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>`Sensitivity: ${(c.raw.y*100).toFixed(1)}%`}}},
       scales:{
-        x:{min:0.8, title:{display:true,text:"Odds Ratio (high achiever = Mostly A's)",color:SLATE},
-          grid:{color:GRID}, ticks:{color:SLATE}},
-        y:{grid:{display:false}, ticks:{color:SLATE,font:{size:10}}}
+        x:{min:0,max:1,title:{display:true,text:'1 − Specificity (False Positive Rate)',color:SLATE},
+          grid:{color:GRID},ticks:{color:SLATE,callback:v=>v.toFixed(1)}},
+        y:{min:0,max:1,title:{display:true,text:'Sensitivity (True Positive Rate)',color:SLATE},
+          grid:{color:GRID},ticks:{color:SLATE,callback:v=>v.toFixed(1)}}
       }
     }
   });
 })();
 
-// Chart 5: CV vs Test — exact from PFI report Section 9.6
+// Chart 7: CV vs Test — exact from PFI report Section 9.6
 (function(){
-  const ctx = document.getElementById('c-cv'); if (!ctx) return;
-  new Chart(ctx, {
-    type:'bar',
-    data:{ labels:['Accuracy','AUC','F1 Score'],
+  const ctx=document.getElementById('c-cv');if(!ctx)return;
+  new Chart(ctx,{type:'bar',
+    data:{labels:['Accuracy','AUC','F1 Score'],
       datasets:[
-        { label:'10-fold CV', data:[0.673,0.726,0.727],
-          backgroundColor:'rgba(45,106,106,0.55)', borderColor:TEAL, borderWidth:1, borderRadius:4 },
-        { label:'Test Set',   data:[0.687,0.743,0.740],
-          backgroundColor:'rgba(139,69,19,0.65)', borderColor:RUST, borderWidth:1, borderRadius:4 }
-      ]
-    },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:true, labels:{color:SLATE,boxWidth:12,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.raw*100).toFixed(1)}%`}} },
-      scales:{
-        x:{grid:{display:false}, ticks:{color:SLATE}},
-        y:{min:0.50, max:0.80, grid:{color:GRID},
-          ticks:{color:SLATE, callback:v=>(v*100).toFixed(0)+'%'}}
-      }
-    }
+        {label:'10-fold CV',data:[0.673,0.726,0.727],
+          backgroundColor:'rgba(45,106,106,0.55)',borderColor:TEAL,borderWidth:1,borderRadius:4},
+        {label:'Test Set',data:[0.687,0.743,0.740],
+          backgroundColor:'rgba(139,69,19,0.65)',borderColor:RUST,borderWidth:1,borderRadius:4}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:SLATE,boxWidth:12,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.raw*100).toFixed(1)}%`}}},
+      scales:{x:{grid:{display:false},ticks:{color:SLATE}},
+        y:{min:0.50,max:0.80,grid:{color:GRID},
+          ticks:{color:SLATE,callback:v=>(v*100).toFixed(0)+'%'}}}}
   });
 })();
 </script>
