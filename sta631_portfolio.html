@@ -86,7 +86,7 @@ h3.snt-h{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:600;
 .dt td{padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--slate2)}
 .dt tr:last-child td{border-bottom:none}
 .dt tr:hover td{background:var(--cream2)}
-.td-hi{color:var(--rust)!important;font-weight:600}.td-dim{color:var(--sand)!important}.td-ok{color:var(--teal)!important;font-weight:600}.td-effect{color:var(--ink)!important;font-style:italic}
+.td-hi{color:var(--rust)!important;font-weight:600}.td-dim{color:var(--slate)!important;opacity:0.75}.td-ok{color:var(--teal)!important;font-weight:600}.td-effect{color:var(--ink)!important;font-style:italic}
 .cm{display:inline-grid;grid-template-columns:auto repeat(3,72px);gap:4px;margin:1rem 0}
 .cm-cell{padding:.45rem .4rem;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.72rem;border-radius:4px}
 .cm-hd{font-size:.58rem;letter-spacing:.07em;color:var(--slate);display:flex;align-items:center;justify-content:center}
@@ -234,8 +234,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem;max-width:1080px;margin
           <table class="dt">
             <thead><tr><th>Term</th><th>Estimate</th><th>Std Err</th><th>p-value</th><th>Plain meaning</th></tr></thead>
             <tbody>
-              <tr><td>(Intercept)</td><td>39.94</td><td class="td-dim">0.717</td><td class="td-dim">1.22e-187</td><td class="td-effect">mpg when hp=0 (baseline)</td></tr>
-              <tr><td>horsepower</td><td class="td-hi">−0.158</td><td class="td-dim">0.00645</td><td class="td-hi">7.03e-81</td><td class="td-effect">Each +1 hp → −0.16 mpg</td></tr>
+              <tr><td>(Intercept)</td><td>39.94</td><td style="color:var(--sand)">0.717</td><td>1.22e-187</td><td class="td-effect">mpg when hp=0 (baseline)</td></tr>
+              <tr><td>horsepower</td><td class="td-hi">−0.158</td><td style="color:var(--sand)">0.00645</td><td class="td-hi">7.03e-81</td><td class="td-effect">Each +1 hp → −0.16 mpg</td></tr>
             </tbody>
           </table>
         </div>
@@ -313,11 +313,11 @@ footer{border-top:1px solid var(--border);padding:2.5rem;max-width:1080px;margin
       <table class="dt">
         <thead><tr><th>Predictor</th><th>Estimate (log)</th><th>Rate Ratio</th><th>Effect in plain English</th><th>p-value</th></tr></thead>
         <tbody>
-          <tr><td>School involvement score</td><td class="td-ok">+0.312</td><td class="td-ok">1.37</td><td class="td-effect">"Each additional point of involvement → 37% more school events attended"</td><td class="td-dim">&lt;0.001</td></tr>
-          <tr><td>Home engagement score</td><td class="td-ok">+0.198</td><td class="td-ok">1.22</td><td class="td-effect">"Higher home engagement → 22% more events"</td><td class="td-dim">&lt;0.001</td></tr>
-          <tr><td>Two-parent household</td><td class="td-ok">+0.143</td><td class="td-ok">1.15</td><td class="td-effect">"Two-parent families attend ~15% more school events"</td><td class="td-dim">0.003</td></tr>
-          <tr><td>Disability status (yes)</td><td class="td-hi">−0.187</td><td class="td-hi">0.83</td><td class="td-effect">"Children with disabilities: parents attend ~17% fewer events"</td><td class="td-dim">0.009</td></tr>
-          <tr><td>Parent: less than HS</td><td class="td-hi">−0.221</td><td class="td-hi">0.80</td><td class="td-effect">"Parents without HS diploma attend ~20% fewer events"</td><td class="td-dim">&lt;0.001</td></tr>
+          <tr><td>School involvement score</td><td class="td-ok">+0.312</td><td class="td-ok">1.37</td><td class="td-effect">"Each additional point of involvement → 37% more school events attended"</td><td>&lt;0.001</td></tr>
+          <tr><td>Home engagement score</td><td class="td-ok">+0.198</td><td class="td-ok">1.22</td><td class="td-effect">"Higher home engagement → 22% more events"</td><td>&lt;0.001</td></tr>
+          <tr><td>Two-parent household</td><td class="td-ok">+0.143</td><td class="td-ok">1.15</td><td class="td-effect">"Two-parent families attend ~15% more school events"</td><td>0.003</td></tr>
+          <tr><td>Disability status (yes)</td><td class="td-hi">−0.187</td><td class="td-hi">0.83</td><td class="td-effect">"Children with disabilities: parents attend ~17% fewer events"</td><td>0.009</td></tr>
+          <tr><td>Parent: less than HS</td><td class="td-hi">−0.221</td><td class="td-hi">0.80</td><td class="td-effect">"Parents without HS diploma attend ~20% fewer events"</td><td>&lt;0.001</td></tr>
         </tbody>
       </table>
       <p style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--sand);margin-top:.4rem">NB dispersion: mean FSFREQ = 7.02, variance = 85.4, ratio = 12.2. θ = 2.07. Test RMSE = 8.12. These are approximate rate ratios derived from the PFI report coefficient interpretations.</p>
@@ -427,10 +427,10 @@ best_size <span class="op">&lt;-</span> <span class="fn">which.min</span>(val_er
       <table class="dt">
         <thead><tr><th>Step</th><th>Removed</th><th>Predictors remaining</th><th>Adj. R²</th><th>Why removed</th></tr></thead>
         <tbody>
-          <tr><td class="td-dim">Start</td><td class="td-dim">—</td><td>mpg, cylinders, displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">Full model baseline</td></tr>
-          <tr><td>1</td><td class="td-hi">cylinders</td><td>mpg, displacement, horsepower, weight, year</td><td>0.621</td><td class="td-dim">Largest p-value: 0.902 ≫ 0.05</td></tr>
-          <tr><td>2</td><td class="td-hi">mpg</td><td>displacement, horsepower, weight, year</td><td>0.620</td><td class="td-dim">Largest p-value: 0.209</td></tr>
-          <tr><td>3</td><td class="td-hi">year</td><td>displacement, horsepower, weight</td><td>0.620</td><td class="td-dim">Largest p-value: 0.288</td></tr>
+          <tr><td class="td-dim">Start</td><td class="td-dim">—</td><td>mpg, cylinders, displacement, horsepower, weight, year</td><td>0.620</td><td style="color:var(--slate2)">Full model baseline</td></tr>
+          <tr><td>1</td><td class="td-hi">cylinders</td><td>mpg, displacement, horsepower, weight, year</td><td>0.621</td><td style="color:var(--slate2)">Largest p-value: 0.902 ≫ 0.05</td></tr>
+          <tr><td>2</td><td class="td-hi">mpg</td><td>displacement, horsepower, weight, year</td><td>0.620</td><td style="color:var(--slate2)">Largest p-value: 0.209</td></tr>
+          <tr><td>3</td><td class="td-hi">year</td><td>displacement, horsepower, weight</td><td>0.620</td><td style="color:var(--slate2)">Largest p-value: 0.288</td></tr>
           <tr><td class="td-ok">Final</td><td class="td-dim">—</td><td><strong>displacement + horsepower + weight</strong></td><td class="td-ok">0.620</td><td class="td-ok">All remaining p &lt; 0.05</td></tr>
         </tbody>
       </table>
@@ -508,12 +508,12 @@ best_size <span class="op">&lt;-</span> <span class="fn">which.min</span>(val_er
       <table class="dt">
         <thead><tr><th>Predictor</th><th>Estimate</th><th>p-value</th><th>What it means in plain English</th></tr></thead>
         <tbody>
-          <tr><td>Price (Bad shelf baseline)</td><td class="td-hi">−0.0559</td><td class="td-dim">8.34e−12</td><td class="td-effect">"Each $1 increase in price is associated with ~0.056 fewer units sold, in a bad shelf location."</td></tr>
-          <tr><td>ShelveLoc: Good</td><td class="td-ok">+5.264</td><td class="td-dim">8.37e−5</td><td class="td-effect">"Good shelf placement adds about 5.3 units sold compared to bad placement."</td></tr>
-          <tr><td>ShelveLoc: Medium</td><td>+1.764</td><td class="td-dim">0.127</td><td class="td-effect">"Medium placement shows no statistically significant advantage (p = 0.13)."</td></tr>
-          <tr><td>Advertising</td><td class="td-ok">+0.0854</td><td class="td-dim">1.57e−8</td><td class="td-effect">"Each $1,000 in advertising → ~0.085 additional units sold."</td></tr>
-          <tr><td>Income</td><td class="td-ok">+0.0164</td><td class="td-dim">3.54e−6</td><td class="td-effect">"Each $1,000 in community income → ~0.016 more units sold."</td></tr>
-          <tr><td>Price × Good shelf</td><td class="td-hi">−0.00432</td><td class="td-dim">0.699</td><td class="td-effect">"Slightly stronger price sensitivity in good locations, but not statistically significant."</td></tr>
+          <tr><td>Price (Bad shelf baseline)</td><td class="td-hi">−0.0559</td><td>8.34e−12</td><td class="td-effect">"Each $1 increase in price is associated with ~0.056 fewer units sold, in a bad shelf location."</td></tr>
+          <tr><td>ShelveLoc: Good</td><td class="td-ok">+5.264</td><td>8.37e−5</td><td class="td-effect">"Good shelf placement adds about 5.3 units sold compared to bad placement."</td></tr>
+          <tr><td>ShelveLoc: Medium</td><td>+1.764</td><td>0.127</td><td class="td-effect">"Medium placement shows no statistically significant advantage (p = 0.13)."</td></tr>
+          <tr><td>Advertising</td><td class="td-ok">+0.0854</td><td>1.57e−8</td><td class="td-effect">"Each $1,000 in advertising → ~0.085 additional units sold."</td></tr>
+          <tr><td>Income</td><td class="td-ok">+0.0164</td><td>3.54e−6</td><td class="td-effect">"Each $1,000 in community income → ~0.016 more units sold."</td></tr>
+          <tr><td>Price × Good shelf</td><td class="td-hi">−0.00432</td><td>0.699</td><td class="td-effect">"Slightly stronger price sensitivity in good locations, but not statistically significant."</td></tr>
         </tbody>
       </table>
       <p style="font-size:.82rem;color:var(--slate2);margin-top:.75rem">Train R² = 0.626 · Test R² = 0.637 · Nearly identical — the model generalizes stably with no overfitting.</p>
@@ -883,33 +883,39 @@ const RUST='#8b4513',TEAL='#2d6a6a',GOLD='#b8860b',SLATE='#6b7280',GRID='#e4ddd0
 // Chart ROC: Logistic ROC curve (AUC=0.743, calibrated from report)
 (function(){
   const ctx=document.getElementById('c-roc');if(!ctx)return;
-  // ROC curve points calibrated to AUC=0.743
-  // Points represent (1-specificity, sensitivity) = (FPR, TPR) pairs
-  const pts=[
-    {x:0.00,y:0.000},{x:0.02,y:0.120},{x:0.05,y:0.245},{x:0.08,y:0.340},
-    {x:0.12,y:0.430},{x:0.16,y:0.510},{x:0.20,y:0.577},{x:0.25,y:0.635},
-    {x:0.30,y:0.685},{x:0.35,y:0.725},{x:0.40,y:0.762},{x:0.45,y:0.795},
-    {x:0.50,y:0.824},{x:0.55,y:0.850},{x:0.60,y:0.874},{x:0.65,y:0.896},
-    {x:0.70,y:0.916},{x:0.75,y:0.934},{x:0.80,y:0.950},{x:0.85,y:0.963},
-    {x:0.90,y:0.975},{x:0.95,y:0.987},{x:1.00,y:1.000}
-  ];
+  // Use labels array + two datasets so Chart.js renders correctly as a line chart
+  const fpr=[0.00,0.02,0.05,0.08,0.12,0.16,0.20,0.25,0.30,0.35,0.40,0.45,
+              0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00];
+  const tpr=[0.000,0.120,0.245,0.340,0.430,0.510,0.577,0.635,0.685,0.725,0.762,
+             0.795,0.824,0.850,0.874,0.896,0.916,0.934,0.950,0.963,0.975,0.987,1.000];
+  const diag=fpr.map(v=>v); // y=x diagonal
   new Chart(ctx,{type:'line',
-    data:{datasets:[
-      {label:'Logistic (AUC=0.743)',data:pts,
-        borderColor:RUST,backgroundColor:'rgba(139,69,19,0.07)',
-        borderWidth:2.5,pointRadius:0,fill:true,tension:0.35},
-      {label:'Random (AUC=0.5)',data:[{x:0,y:0},{x:1,y:1}],
-        borderColor:'rgba(107,114,128,0.4)',borderWidth:1.5,
-        borderDash:[5,5],pointRadius:0,fill:false}
-    ]},
+    data:{
+      labels:fpr.map(v=>v.toFixed(2)),
+      datasets:[
+        {label:'Logistic (AUC = 0.743)',data:tpr,
+          borderColor:RUST,backgroundColor:'rgba(139,69,19,0.08)',
+          borderWidth:2.5,pointRadius:0,fill:true,tension:0.4},
+        {label:'Random guess (AUC = 0.5)',data:diag,
+          borderColor:'rgba(107,114,128,0.45)',borderWidth:1.5,
+          borderDash:[6,4],pointRadius:0,fill:false,tension:0}
+      ]
+    },
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:true,labels:{color:SLATE,boxWidth:12,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>`Sensitivity: ${(c.raw.y*100).toFixed(1)}%`}}},
+      plugins:{
+        legend:{display:true,labels:{color:SLATE,boxWidth:12,font:{size:10}}},
+        tooltip:{callbacks:{
+          title:i=>`FPR = ${i[0].label}`,
+          label:c=>c.datasetIndex===0?`TPR = ${(c.raw*100).toFixed(1)}%`:null
+        }}
+      },
       scales:{
-        x:{min:0,max:1,title:{display:true,text:'1 − Specificity (False Positive Rate)',color:SLATE},
-          grid:{color:GRID},ticks:{color:SLATE,callback:v=>v.toFixed(1)}},
-        y:{min:0,max:1,title:{display:true,text:'Sensitivity (True Positive Rate)',color:SLATE},
-          grid:{color:GRID},ticks:{color:SLATE,callback:v=>v.toFixed(1)}}
+        x:{title:{display:true,text:'1 − Specificity  (False Positive Rate)',color:SLATE},
+          grid:{color:GRID},ticks:{color:SLATE,maxTicksLimit:6,
+            callback:(_,i,ticks)=>i===0||i===ticks.length-1||i%4===0?fpr[i].toFixed(1):null}},
+        y:{min:0,max:1,
+          title:{display:true,text:'Sensitivity  (True Positive Rate)',color:SLATE},
+          grid:{color:GRID},ticks:{color:SLATE,stepSize:0.2}}
       }
     }
   });
