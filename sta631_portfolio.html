@@ -411,7 +411,7 @@ best_size <span class="op">&lt;-</span> <span class="fn">which.min</span>(val_er
       <div>
         <div class="chart-panel" style="margin-bottom:1.25rem">
           <div class="chart-title">Validation MSE by Number of Predictors</div>
-          <div class="chart-sub">Diamond project. Rust point = selected model (size 5, val MSE ≈ 6.9×10⁻⁴). Sharp drop 1→5, then flat. Adding predictors beyond 5 gives no benefit.</div>
+          <div class="chart-sub">Diamond project. Rust point = selected model (size 5, val MSE ≈ 6.9×10⁻⁴). Sharp climb after 5, then flat. Adding predictors beyond 5 makes the model worse.</div>
           <div class="chart-wrap"><canvas id="c-subset"></canvas></div>
         </div>
         <div class="chart-panel">
@@ -744,7 +744,7 @@ best_size <span class="op">&lt;-</span> <span class="fn">which.min</span>(val_er
 
 <footer>
   <div class="ft-l">Kabin Devkota &nbsp;·&nbsp; STA 631 &nbsp;·&nbsp; Grand Valley State University &nbsp;·&nbsp; Winter 2026</div>
-  <div class="ft-r"><a href="https://kabindevkota.github.io">kabindevkota.github.io</a> &nbsp;·&nbsp; R · tidymodels · Chart.js</div>
+  <div class="ft-r"><a href="https://kabindevkota.github.io">kabindevkota.github.io</a> &nbsp;·&nbsp; R · tidymodels · Claude.ai</div>
 </footer>
 
 <script>
